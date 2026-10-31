@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dan Holman's Portfolio</title>
+<meta name="description" content="Six public projects by Dan Holman that build, test, and measure AI coding agents: a Jira-to-PR test-writing agent, a benchmark with seeded bugs, a PR reviewer, an MCP server, and a dashboard.">
+<meta property="og:title" content="Dan Holman's Portfolio">
+<meta property="og:description" content="Six public projects that build, test, and measure AI coding agents.">
+<meta property="og:url" content="https://dholman7.github.io/">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one reading column; a system diagram first, then a card per project, then a worked example. */
+:root {
+  --ground: #f4f5f8;
+  --surface: #ffffff;
+  --ink: #151b29;
+  --muted: #586276;
+  --rule: #dce0e8;
+  --agent: #2850d6;
+  --eval: #0b8574;
+  --tool: #7a3fe0;
+  --good: #1b7f3b;
+  --code-bg: #eef0f5;
+  --band: #e9ecf2;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #11141b;
+    --surface: #191e28;
+    --ink: #e7eaf0;
+    --muted: #9aa3b6;
+    --rule: #2a3140;
+    --agent: #7e9cff;
+    --eval: #3fc3ac;
+    --tool: #b690ff;
+    --good: #5fcf83;
+    --code-bg: #0d1016;
+    --band: #161b24;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #11141b;
+  --surface: #191e28;
+  --ink: #e7eaf0;
+  --muted: #9aa3b6;
+  --rule: #2a3140;
+  --agent: #7e9cff;
+  --eval: #3fc3ac;
+  --tool: #b690ff;
+  --good: #5fcf83;
+  --code-bg: #0d1016;
+  --band: #161b24;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 1rem/1.6 var(--body);
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 68rem; margin-inline: auto; padding-block: 2.5rem 5rem; display: grid; gap: 3.5rem; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; letter-spacing: -0.02em; max-width: 22ch; }
+h2 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1.25rem; font-weight: 600; }
+p { margin: 0; max-width: 65ch; }
+a { color: var(--agent); text-underline-offset: 0.18em; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--agent); outline-offset: 2px; border-radius: 3px; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+.lede { color: var(--muted); font-size: 1.125rem; }
+section { display: grid; gap: 1.25rem; }
+.section-head { display: grid; gap: 0.4rem; }
+.section-head p { color: var(--muted); }
+
+/* Header */
+header.top { display: grid; gap: 1rem; }
+.who { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+.results { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; margin-top: 0.5rem; }
+.result { background: var(--surface); padding: 1rem 1.1rem; display: grid; gap: 0.2rem; align-content: start; }
+.result b { font-family: var(--display); font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.result span { color: var(--muted); font-size: 0.92rem; }
+
+/* Contents index */
+.contents { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: 0.6rem 1.5rem; margin: 0; padding: 0; list-style: none; }
+.contents li { display: grid; grid-template-columns: 0.6rem 1fr; gap: 0.7rem; align-items: baseline; }
+.contents .dot { width: 0.6rem; height: 0.6rem; border-radius: 2px; border: 2px solid var(--rule); align-self: center; }
+.contents .dot.agent { border-color: var(--agent); } .contents .dot.eval { border-color: var(--eval); } .contents .dot.tool { border-color: var(--tool); } .contents .dot.app { border-color: var(--muted); }
+.contents a { font-weight: 600; }
+.contents span.what { color: var(--muted); }
+
+/* Diagram */
+figure { margin: 0; display: grid; gap: 0.75rem; }
+.diagram { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem; overflow-x: auto; }
+.diagram svg { display: block; width: 100%; min-width: 760px; height: auto; color: var(--ink); }
+figcaption { color: var(--muted); font-size: 0.95rem; max-width: 70ch; }
+.band { fill: var(--band); }
+.lane { font: 600 12.5px var(--body); fill: var(--muted); }
+.node { fill: var(--surface); stroke: var(--rule); stroke-width: 1.5; }
+.node.agent { stroke: var(--agent); stroke-width: 2; }
+.node.eval { stroke: var(--eval); stroke-width: 2; }
+.node.tool { stroke: var(--tool); stroke-width: 2; }
+.nname { font: 600 14px var(--body); fill: var(--ink); }
+.nsub { font: 400 11.5px var(--body); fill: var(--muted); }
+.role-agent { fill: var(--agent); } .role-eval { fill: var(--eval); } .role-tool { fill: var(--tool); }
+.edge { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+.edge.dash { stroke-dasharray: 5 4; }
+.elabel { font: 500 11.5px var(--body); fill: var(--ink); }
+.ahead { fill: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-size: 0.9rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.swatch { width: 0.9rem; height: 0.9rem; border-radius: 3px; border: 2px solid; display: inline-block; }
+
+/* Start here */
+.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; }
+.path { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 1.1rem 1.2rem; display: grid; gap: 0.6rem; align-content: start; }
+.path .time { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+.path ol { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+
+/* Project cards */
+.projects { display: grid; gap: 1.25rem; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-left: 4px solid var(--rule); border-radius: 10px; padding: 1.3rem 1.4rem; display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+.card.agent { border-left-color: var(--agent); }
+.card.eval { border-left-color: var(--eval); }
+.card.tool { border-left-color: var(--tool); }
+.card.app { border-left-color: var(--muted); }
+.card .about { display: grid; gap: 0.7rem; align-content: start; }
+.card .run { display: grid; gap: 0.6rem; align-content: start; }
+.chip { display: inline-block; font: 600 0.8rem var(--body); padding: 0.15rem 0.55rem; border-radius: 999px; border: 1px solid currentColor; width: fit-content; }
+.chip.agent { color: var(--agent); } .chip.eval { color: var(--eval); } .chip.tool { color: var(--tool); } .chip.app { color: var(--muted); }
+.facts { margin: 0; display: grid; gap: 0.45rem; }
+.facts div { display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.75rem; }
+.facts dt { color: var(--muted); font-size: 0.88rem; padding-top: 0.08rem; }
+.facts dd { margin: 0; font-size: 0.95rem; }
+.links { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; font-size: 0.95rem; }
+.runlabel { font-size: 0.88rem; color: var(--muted); }
+/* Grid items keep their content's min width unless told otherwise; long commands scroll inside their box. */
+.card > *, .run > *, .about > *, section > * { min-width: 0; }
+.code { position: relative; background: var(--code-bg); border: 1px solid var(--rule); border-radius: 8px; min-width: 0; max-width: 100%; }
+.code pre { margin: 0; padding: 0.85rem 1rem; padding-right: 4.5rem; overflow-x: auto; font: 400 0.82rem/1.6 var(--mono); }
+.code pre .c { color: var(--muted); }
+.copy { position: absolute; top: 0.45rem; right: 0.45rem; font: 500 0.75rem var(--body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 0.2rem 0.55rem; cursor: pointer; }
+.copy:hover { border-color: var(--muted); }
+.note { font-size: 0.9rem; color: var(--muted); }
+@media (max-width: 52rem) { .card { grid-template-columns: minmax(0, 1fr); } }
+
+/* Prerequisites table */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.85rem; }
+tr:last-child td { border-bottom: none; }
+td.yes { color: var(--good); font-weight: 600; }
+
+/* Worked example */
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: step; }
+.timeline li { counter-increment: step; display: grid; grid-template-columns: 2.4rem 1fr; gap: 0.9rem; padding-bottom: 1.1rem; position: relative; }
+.timeline li::before { content: counter(step); font: 700 0.95rem var(--display); width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 2px solid var(--agent); color: var(--agent); z-index: 1; }
+.timeline li:not(:last-child)::after { content: ""; position: absolute; left: calc(1.2rem - 1px); top: 2.4rem; bottom: 0; width: 2px; background: var(--rule); }
+.timeline .what { display: grid; gap: 0.2rem; padding-top: 0.35rem; }
+.timeline .what b { font-weight: 600; }
+.timeline .what span { color: var(--muted); font-size: 0.95rem; }
+
+/* Glossary */
+.glossary { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0.9rem 2rem; margin: 0; }
+.glossary div { display: grid; gap: 0.2rem; }
+.glossary dt { font-weight: 600; }
+.glossary dd { margin: 0; color: var(--muted); font-size: 0.95rem; }
+footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rule); padding-top: 1.25rem; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+
+<header class="top">
+  <div class="who">Dan Holman, senior SDET moving into AI engineering. <a href="https://github.com/dholman7">github.com/dholman7</a></div>
+  <h1>Six projects that build, test, and measure AI coding agents</h1>
+  <p class="lede">Each project is public, runs on its own, and backs one claim from the resume with something you can run and check. Together they form one loop: an agent turns a Jira story into a verified Playwright test, a reviewer checks the pull request, and a benchmark measures whether any of it works.</p>
+  <div class="results" aria-label="Headline results">
+    <div class="result"><b>97% vs 60%</b><span>Storywright vs a single Claude call on 60 held-out trials, same model</span></div>
+    <div class="result"><b>32 seeded bugs</b><span>hand-written defects the benchmark checks every generated test against</span></div>
+    <div class="result"><b>0 of 24</b><span>false alarms from review-loop on Opus 5.5, across two sets of harmless changes</span></div>
+    <div class="result"><b>Story → Done</b><span>a Jira story becomes a merged, tested PR, and the issue closes itself</span></div>
+  </div>
+</header>
+
+<section aria-labelledby="contents">
+  <div class="section-head">
+    <h2 id="contents">What's in this portfolio</h2>
+    <p>Six projects, each in its own public repository. Click a name to jump to what it does and how to run it.</p>
+  </div>
+  <ul class="contents">
+    <li><i class="dot agent"></i><div><a href="#storywright">Storywright</a> <span class="what">is an AI agent that writes and verifies automated tests from a Jira story, then opens the pull request.</span></div></li>
+    <li><i class="dot agent"></i><div><a href="#agent-dev-skills">review-loop</a> <span class="what">is an AI code reviewer for pull requests that double-checks every comment before posting it.</span></div></li>
+    <li><i class="dot eval"></i><div><a href="#agent-eval-gate">agent-eval-gate</a> <span class="what">is a benchmark that measures how well test-writing agents work, using deliberately planted bugs.</span></div></li>
+    <li><i class="dot eval"></i><div><a href="#agent-telemetry">agent-telemetry</a> <span class="what">is a live dashboard of those measurements, down to each individual run.</span></div></li>
+    <li><i class="dot tool"></i><div><a href="#ci-context-mcp">ci-context-mcp</a> <span class="what">lets AI coding assistants read build results and logs, so they can answer "why did CI fail?"</span></div></li>
+    <li><i class="dot app"></i><div><a href="#vendor-intake-app">vendor-intake-app</a> <span class="what">is a working web app (Next.js + Python) that all of the above test against.</span></div></li>
+  </ul>
+</section>
+
+<section aria-labelledby="map">
+  <div class="section-head">
+    <h2 id="map">How the pieces fit</h2>
+    <p>The top row is the delivery loop. The bottom row proves the loop works. The app in the middle is what every test runs against.</p>
+  </div>
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 1040 450" role="img" aria-label="A Jira story goes to Storywright, which runs tests against vendor-intake-app and opens a pull request. review-loop reviews the pull request, and on merge the Jira issue closes. ci-context-mcp gives agents CI context. agent-eval-gate scores agents against seeded bugs in the app, and agent-telemetry shows the results and traces.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="ahead"/>
+          </marker>
+        </defs>
+        <rect class="band" x="0" y="0" width="1040" height="168" rx="10"/>
+        <rect class="band" x="0" y="318" width="1040" height="132" rx="10"/>
+        <text class="lane" x="16" y="24">Delivery: story to merged test</text>
+        <text class="lane" x="16" y="342">Measurement: does it actually work?</text>
+
+        <!-- Row 1 -->
+        <rect class="node" x="16" y="56" width="168" height="70" rx="10"/>
+        <text class="nname" x="100" y="86" text-anchor="middle">Jira story</text>
+        <text class="nsub" x="100" y="106" text-anchor="middle">Gherkin acceptance criteria</text>
+
+        <rect class="node agent" x="226" y="56" width="168" height="70" rx="10"/>
+        <text class="nname" x="310" y="86" text-anchor="middle">Storywright</text>
+        <text class="nsub role-agent" x="310" y="106" text-anchor="middle">agent that writes tests</text>
+
+        <rect class="node" x="436" y="56" width="168" height="70" rx="10"/>
+        <text class="nname" x="520" y="86" text-anchor="middle">Pull request</text>
+        <text class="nsub" x="520" y="106" text-anchor="middle">one verified test file</text>
+
+        <rect class="node agent" x="646" y="56" width="168" height="70" rx="10"/>
+        <text class="nname" x="730" y="86" text-anchor="middle">review-loop</text>
+        <text class="nsub role-agent" x="730" y="106" text-anchor="middle">agent that reviews PRs</text>
+
+        <rect class="node" x="856" y="56" width="168" height="70" rx="10"/>
+        <text class="nname" x="940" y="86" text-anchor="middle">Merged, issue Done</text>
+        <text class="nsub" x="940" y="106" text-anchor="middle">closed by a workflow</text>
+
+        <line class="edge" x1="184" y1="91" x2="224" y2="91" marker-end="url(#arrow)"/>
+        <text class="elabel" x="205" y="82" text-anchor="middle">reads</text>
+        <line class="edge" x1="394" y1="91" x2="434" y2="91" marker-end="url(#arrow)"/>
+        <text class="elabel" x="415" y="82" text-anchor="middle">opens</text>
+        <line class="edge" x1="604" y1="91" x2="644" y2="91" marker-end="url(#arrow)"/>
+        <text class="elabel" x="625" y="82" text-anchor="middle">checks</text>
+        <line class="edge" x1="814" y1="91" x2="854" y2="91" marker-end="url(#arrow)"/>
+        <text class="elabel" x="835" y="82" text-anchor="middle">merge</text>
+
+        <!-- Row 2 -->
+        <rect class="node tool" x="16" y="206" width="168" height="70" rx="10"/>
+        <text class="nname" x="100" y="236" text-anchor="middle">ci-context-mcp</text>
+        <text class="nsub role-tool" x="100" y="256" text-anchor="middle">MCP server for CI data</text>
+
+        <rect class="node" x="226" y="206" width="378" height="70" rx="10"/>
+        <text class="nname" x="415" y="236" text-anchor="middle">vendor-intake-app</text>
+        <text class="nsub" x="415" y="256" text-anchor="middle">Next.js + FastAPI app under test, 32 Gherkin scenarios</text>
+
+        <line class="edge" x1="310" y1="126" x2="310" y2="204" marker-end="url(#arrow)"/>
+        <text class="elabel" x="318" y="170">runs tests against</text>
+        <line class="edge" x1="520" y1="126" x2="520" y2="204" marker-end="url(#arrow)"/>
+        <text class="elabel" x="528" y="170">lands in</text>
+        <path class="edge dash" d="M184,226 C205,226 205,120 224,112" marker-end="url(#arrow)"/>
+        <text class="elabel" x="132" y="196" text-anchor="middle">CI context (optional)</text>
+
+        <!-- Row 3 -->
+        <rect class="node eval" x="226" y="364" width="378" height="70" rx="10"/>
+        <text class="nname" x="415" y="394" text-anchor="middle">agent-eval-gate</text>
+        <text class="nsub role-eval" x="415" y="414" text-anchor="middle">benchmark and CI gate, 32 tasks, 32 seeded bugs</text>
+
+        <rect class="node eval" x="646" y="364" width="378" height="70" rx="10"/>
+        <text class="nname" x="835" y="394" text-anchor="middle">agent-telemetry</text>
+        <text class="nsub role-eval" x="835" y="414" text-anchor="middle">dashboard of intervals, trials, traces</text>
+
+        <line class="edge" x1="415" y1="364" x2="415" y2="278" marker-end="url(#arrow)"/>
+        <text class="elabel" x="423" y="306">seeds bugs, scores agents</text>
+        <line class="edge" x1="604" y1="399" x2="644" y2="399" marker-end="url(#arrow)"/>
+        <text class="elabel" x="625" y="390" text-anchor="middle">results</text>
+        <path class="edge dash" d="M730,126 C730,250 690,330 600,372" marker-end="url(#arrow)"/>
+        <text class="elabel" x="742" y="250">measured on its bugs</text>
+      </svg>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="swatch" style="border-color: var(--agent)"></i>Agent (calls Claude)</span>
+      <span><i class="swatch" style="border-color: var(--eval)"></i>Measurement</span>
+      <span><i class="swatch" style="border-color: var(--tool)"></i>Developer tooling</span>
+      <span><i class="swatch" style="border-color: var(--rule)"></i>App, story, or PR</span>
+    </div>
+    <figcaption>Storywright and review-loop are the agents. agent-eval-gate measures both against bugs seeded into copies of vendor-intake-app, so no result depends on taking an agent's word for it. agent-telemetry turns those measurements into a dashboard.</figcaption>
+  </figure>
+</section>
+
+<section aria-labelledby="start">
+  <div class="section-head">
+    <h2 id="start">Start here</h2>
+    <p>Pick the path that matches how much time you have. Each step only needs what the step before it installed.</p>
+  </div>
+  <div class="paths">
+    <div class="path">
+      <span class="time">2 minutes, nothing to install</span>
+      <h3>Look at the results</h3>
+      <ol>
+        <li>Open the <a href="https://dholman7.github.io/agent-telemetry/">live dashboard</a> and click a run to see every trial.</li>
+        <li>Read Storywright's <a href="https://github.com/dholman7/storywright#results">results table</a>.</li>
+        <li>Open <a href="https://github.com/dholman7/vendor-intake-app/pull/4">PR #4</a>, a test an agent wrote from a Jira story.</li>
+      </ol>
+    </div>
+    <div class="path">
+      <span class="time">10 minutes, no API key</span>
+      <h3>Run the app and the benchmark</h3>
+      <ol>
+        <li>Start vendor-intake-app with <code>make up</code> and sign in as a demo user.</li>
+        <li>Prove the benchmark is sound with <code>aeg validate</code>.</li>
+        <li>Score the built-in reference agent with <code>aeg run</code>.</li>
+      </ol>
+    </div>
+    <div class="path">
+      <span class="time">15 minutes, with an Anthropic API key</span>
+      <h3>Watch an agent write a test</h3>
+      <ol>
+        <li>Run Storywright on a story. On the default Haiku profile one run costs under a cent.</li>
+        <li>Have review-loop review a pull request without posting.</li>
+        <li>Add ci-context-mcp to Claude Code and ask why a CI run failed.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="projects">
+  <div class="section-head">
+    <h2 id="projects">The six projects</h2>
+    <p>Clone them side by side in one folder. Several projects find each other by relative path, for example <code>../vendor-intake-app</code>.</p>
+  </div>
+  <div class="code" style="max-width: 44rem">
+    <button class="copy" type="button">Copy</button>
+<pre>mkdir portfolio && cd portfolio
+for r in vendor-intake-app agent-eval-gate storywright agent-dev-skills ci-context-mcp agent-telemetry; do
+  git clone https://github.com/dholman7/$r
+done</pre>
+  </div>
+
+  <div class="projects">
+
+    <article class="card app" id="vendor-intake-app">
+      <div class="about">
+        <span class="chip app">App under test</span>
+        <h3>vendor-intake-app</h3>
+        <p>A small but real vendor-onboarding product: members upload a W-9, insurance certificate, and contract; the app extracts fields; reviewers approve or reject. Every agent in the portfolio writes tests against it.</p>
+        <dl class="facts">
+          <div><dt>Proves</dt><dd>React + TypeScript and Python in one product, built test-first</dd></div>
+          <div><dt>Stack</dt><dd>Next.js 16, React 19, FastAPI, SQLAlchemy, SQLite, Playwright, Docker</dd></div>
+          <div><dt>Evidence</dt><dd>68 backend tests (97% coverage), 27 Playwright tests with accessibility scans, 32 Gherkin scenarios</dd></div>
+        </dl>
+        <div class="links"><a href="https://github.com/dholman7/vendor-intake-app">Repository</a></div>
+      </div>
+      <div class="run">
+        <span class="runlabel">Run it with Docker</span>
+        <div class="code"><button class="copy" type="button">Copy</button>
+<pre>cd vendor-intake-app
+make up    <span class="c"># web on :3000, API docs on :8000/docs</span></pre></div>
+        <span class="runlabel">Or without Docker (uv and Node 24)</span>
+        <div class="code"><button class="copy" type="button">Copy</button>
+<pre>make install && npm ci --prefix frontend
+make dev   <span class="c"># seeds demo data</span>
+make check <span class="c"># backend lint, types, tests</span></pre></div>
+        <p class="note">Sign in as <code>member@northwind.test</code> or <code>reviewer@northwind.test</code>, password <code>demo-password</code>.</p>
+      </div>
+    </article>
+
+    <article class="card eval" id="agent-eval-gate">
+      <div class="about">
+        <span class="chip eval">Measurement</span>
+        <h3>agent-eval-gate</h3>
+        <p>A benchmark and CI gate for agents that write tests. Each of 32 tasks is one Gherkin scenario. A generated test counts only if it passes on the real app and fails when a hand-written bug is seeded in.</p>
+        <dl class="facts">
+          <div><dt>Proves</dt><dd>Agent evaluation that holds up: frozen dev/held-out split, confidence intervals, record and replay</dd></div>
+          <div><dt>Stack</dt><dd>Python, Playwright, OpenTelemetry, GitHub Actions composite action</dd></div>
+          <div><dt>Evidence</dt><dd>Every seeded bug is proven catchable by a reference test. The gate fails a PR only when results drop by more than run-to-run noise.</dd></div>
+        </dl>
+        <div class="links"><a href="https://github.com/dholman7/agent-eval-gate">Repository</a></div>
+      </div>
+      <div class="run">
+        <span class="runlabel">Run it (uv; no API key)</span>
+        <div class="code"><button class="copy" type="button">Copy</button>
+<pre>cd agent-eval-gate && uv sync
+uv run aeg validate        <span class="c"># references pass, every bug caught (~2.5 min)</span>
+uv run aeg run --agent reference --split dev
+uv run aeg gate --baseline baselines/reference-dev.json --current results/latest.json</pre></div>
+        <span class="runlabel">Score your own agent</span>
+        <div class="code"><button class="copy" type="button">Copy</button>
+<pre>uv run aeg run --agent my-agent --command "python my_agent.py" --split dev --trials 5</pre></div>
+      </div>
+    </article>
+
+    <article class="card agent" id="storywright">
+      <div class="about">
+        <span class="chip agent">Agent</span>
+        <h3>Storywright</h3>
+        <p>Turns a user story into Playwright API tests and proves they work. It reads the repo, writes the test, runs it against the real app, and repairs what fails. A deterministic guard rejects any repair that weakens an assertion.</p>
+        <dl class="facts">
+          <div><dt>Proves</dt><dd>LLM application development, tool orchestration, and failure handling</dd></div>
+          <div><dt>Stack</dt><dd>LangGraph, Anthropic SDK (structured outputs, prompt caching), MCP client, Jira Cloud API</dd></div>
+          <div><dt>Evidence</dt><dd>97% of held-out trials (58/60) vs 60% for a single call, at $0.0028 per trial. Opus 5.5 went 20/20.</dd></div>
+        </dl>
+        <div class="links"><a href="https://github.com/dholman7/storywright">Repository</a></div>
+      </div>
+      <div class="run">
+        <span class="runlabel">Write a test from a story file</span>
+        <div class="code"><button class="copy" type="button">Copy</button>
+<pre>cd storywright && uv sync
+export ANTHROPIC_API_KEY=...
+uv run storywright run --repo ../vendor-intake-app \
+  --story story.feature --task-id VEN-01</pre></div>
+        <span class="runlabel">From Jira, then open the PR (dry run without <code>--yes</code>)</span>
+        <div class="code"><button class="copy" type="button">Copy</button>
+<pre>export JIRA_BASE_URL=... JIRA_EMAIL=... JIRA_TOKEN=...
+uv run storywright run --repo ../vendor-intake-app --jira KAN-1
+uv run storywright publish --repo ../vendor-intake-app --jira KAN-1 --yes</pre></div>
+        <p class="note"><code>STORYWRIGHT_PROFILE=report</code> switches from Haiku 5.5 to Opus 5.5.</p>
+      </div>
+    </article>
+
+    <article class="card agent" id="agent-dev-skills">
+      <div class="about">
+        <span class="chip agent">Agent, Claude Code plugin</span>
+        <h3>agent-dev-skills: review-loop</h3>
+        <p>A pull request reviewer that checks its own work. Every finding must quote real code and survive a second verification pass before it becomes a comment. New commits get a re-review that checks whether old comments were addressed.</p>
+        <dl class="facts">
+          <div><dt>Proves</dt><dd>Claude Code skills and plugins, plus precision measured, not assumed</dd></div>
+          <div><dt>Stack</dt><dd>Claude Code plugin, Python CLI, GitHub Action, Conventional Comments</dd></div>
+          <div><dt>Evidence</dt><dd>Opus 5.5 catches 29 of 32 seeded bugs, with 0 false alarms in 24 harmless changes, 14 of them built to look risky.</dd></div>
+        </dl>
+        <div class="links"><a href="https://github.com/dholman7/agent-dev-skills">Repository</a></div>
+      </div>
+      <div class="run">
+        <span class="runlabel">Install in Claude Code</span>
+        <div class="code"><button class="copy" type="button">Copy</button>
+<pre>/plugin marketplace add dholman7/agent-dev-skills
+/plugin install agent-dev-skills@dholman7-skills</pre></div>
+        <span class="runlabel">Or run the CLI (prints a review; <code>--post</code> posts it)</span>
+        <div class="code"><button class="copy" type="button">Copy</button>
+<pre>cd agent-dev-skills && uv sync
+export ANTHROPIC_API_KEY=... GITHUB_TOKEN=...
+uv run review-loop pr --repo owner/name --pr 42</pre></div>
+      </div>
+    </article>
+
+    <article class="card tool" id="ci-context-mcp">
+      <div class="about">
+        <span class="chip tool">Developer tooling, MCP server</span>
+        <h3>ci-context-mcp</h3>
+        <p>Gives Claude Code, Cursor, or any MCP client the CI context it needs: recent runs, why a run failed, job logs, coverage, and pull request checks from GitHub Actions. Ask "why did CI fail?" and it answers from the real logs.</p>
+        <dl class="facts">
+          <div><dt>Proves</dt><dd>MCP server design with a real security model</dd></div>
+          <div><dt>Stack</dt><dd>MCP Python SDK 2.x, httpx, GitHub REST API</dd></div>
+          <div><dt>Evidence</dt><dd>Six read-only tools. GET-only client, repo allowlist, and the token never leaves GitHub.</dd></div>
+        </dl>
+        <div class="links"><a href="https://github.com/dholman7/ci-context-mcp">Repository</a></div>
+      </div>
+      <div class="run">
+        <span class="runlabel">Add it to Claude Code</span>
+        <div class="code"><button class="copy" type="button">Copy</button>
+<pre>cd ci-context-mcp && uv sync
+claude mcp add ci-context \
+  -e GITHUB_TOKEN=github_pat_... \
+  -e CI_CONTEXT_REPOS=owner/app,owner/lib \
+  -- uv run --project "$PWD" ci-context-mcp</pre></div>
+        <p class="note">Use a fine-grained token with Actions: read and Contents: read on the listed repos only.</p>
+      </div>
+    </article>
+
+    <article class="card eval" id="agent-telemetry">
+      <div class="about">
+        <span class="chip eval">Measurement, dashboard</span>
+        <h3>agent-telemetry</h3>
+        <p>A static dashboard over every published benchmark run. It shows success rates as intervals so you can see when two agents really differ, and lets you open any single trial to see its verdict, trace, and agent log.</p>
+        <dl class="facts">
+          <div><dt>Proves</dt><dd>Observability for agents, and React data visualization without a chart library</dd></div>
+          <div><dt>Stack</dt><dd>Next.js 16 static export, React 19, OpenTelemetry traces, GitHub Pages</dd></div>
+          <div><dt>Evidence</dt><dd>12 runs and their traces, rebuilt weekly from agent-eval-gate's published results.</dd></div>
+        </dl>
+        <div class="links"><a href="https://dholman7.github.io/agent-telemetry/">Live site</a><a href="https://github.com/dholman7/agent-telemetry">Repository</a></div>
+      </div>
+      <div class="run">
+        <span class="runlabel">Run it (Node 24; reads ../agent-eval-gate)</span>
+        <div class="code"><button class="copy" type="button">Copy</button>
+<pre>cd agent-telemetry && npm ci
+npm run dev     <span class="c"># http://localhost:3000</span>
+npm run build   <span class="c"># static site in out/</span></pre></div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<section aria-labelledby="needs">
+  <div class="section-head">
+    <h2 id="needs">What each one needs</h2>
+    <p>Language versions come from each repo's <code>.python-version</code> and <code>.nvmrc</code>; uv installs Python for you.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th scope="col">Project</th><th scope="col">Tools</th><th scope="col">Anthropic key</th><th scope="col">Other credentials</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>vendor-intake-app</td><td>Docker, or uv + Node</td><td>No</td><td>None</td></tr>
+        <tr><td>agent-eval-gate</td><td>uv, Node (for Playwright)</td><td>Only to score a live LLM agent</td><td>None</td></tr>
+        <tr><td>Storywright</td><td>uv, Node; <code>gh</code> to publish</td><td class="yes">Yes</td><td>Jira token for <code>--jira</code>; GitHub auth for <code>publish</code></td></tr>
+        <tr><td>review-loop</td><td>uv, or Claude Code</td><td class="yes">Yes</td><td>GitHub token</td></tr>
+        <tr><td>ci-context-mcp</td><td>uv, an MCP client</td><td>No</td><td>GitHub token (read-only)</td></tr>
+        <tr><td>agent-telemetry</td><td>Node</td><td>No</td><td>None</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="example">
+  <div class="section-head">
+    <h2 id="example">One story, start to finish</h2>
+    <p>This happened on October 29, 2026, with story KAN-4: "A rejection note can't be blank." Every step is in the public history.</p>
+  </div>
+  <ol class="timeline">
+    <li><div class="what"><b>The story goes into Jira</b><span>Two Gherkin scenarios: a whitespace-only note is refused, and a real note is stored without surrounding spaces.</span></div></li>
+    <li><div class="what"><b>Storywright writes and verifies the tests</b><span>It made 4 repo lookups, wrote 2 tests, and both passed against the running app on the first try, for $0.0041.</span></div></li>
+    <li><div class="what"><b>The tests are checked against real bugs</b><span>Allowing a blank note made exactly the first test fail. Skipping the trim made exactly the second fail.</span></div></li>
+    <li><div class="what"><b>Storywright opens the pull request</b><span><a href="https://github.com/dholman7/vendor-intake-app/pull/4">PR #4</a> adds one test file, links the story, and moves the issue to In Review. CI ran all 5 checks green.</span></div></li>
+    <li><div class="what"><b>review-loop reviews it</b><span>Its comments were checked against the code. Neither held up, so nothing was posted.</span></div></li>
+    <li><div class="what"><b>Merge closes the story</b><span>A workflow commented the merge commit on KAN-4 and moved it to Done. No one touched Jira.</span></div></li>
+  </ol>
+</section>
+
+<section aria-labelledby="terms">
+  <div class="section-head">
+    <h2 id="terms">Terms used here</h2>
+  </div>
+  <dl class="glossary">
+    <div><dt>Seeded bug</dt><dd>A small, deliberate defect put into a copy of the app. A good test fails when it is present.</dd></div>
+    <div><dt>Held-out split</dt><dd>Tasks kept aside while prompts are tuned, then used for scoring, so results aren't fitted to the test.</dd></div>
+    <div><dt>Confidence interval</dt><dd>The range a success rate likely falls in. Two agents only differ when their ranges don't overlap.</dd></div>
+    <div><dt>Gherkin</dt><dd>Plain-language acceptance criteria written as Given / When / Then. Every task starts from one.</dd></div>
+    <div><dt>MCP</dt><dd>Model Context Protocol, the standard way to give an AI assistant tools such as "read this CI log".</dd></div>
+    <div><dt>dev and report profiles</dt><dd>Haiku 5.5 for cheap iteration, Opus 5.5 for any number that gets published or acted on.</dd></div>
+    <div><dt>Playwright</dt><dd>A browser and API testing framework. All generated tests are Playwright API tests in TypeScript.</dd></div>
+    <div><dt>Conventional Comments</dt><dd>Review comments that start with a label such as <code>issue</code> or <code>nitpick</code> and say whether they block the merge.</dd></div>
+  </dl>
+</section>
+
+<footer>Contact: <a href="https://linkedin.com/in/danxholman">LinkedIn</a> or danxholman@gmail.com. All six repositories are MIT-licensed and written independently; source and history are at <a href="https://github.com/dholman7">github.com/dholman7</a>.</footer>
+
+</main>
+<script>
+  document.querySelectorAll(".code").forEach(function (block) {
+    var button = block.querySelector(".copy");
+    var pre = block.querySelector("pre");
+    if (!button || !pre) return;
+    button.addEventListener("click", function () {
+      var text = pre.innerText.replace(/\s+#.*$/gm, "").trim();
+      navigator.clipboard.writeText(text).then(function () {
+        button.textContent = "Copied";
+        setTimeout(function () { button.textContent = "Copy"; }, 1500);
+      }, function () {
+        button.textContent = "Select and copy";
+      });
+    });
+  });
+</script>
+</body>
+</html>
