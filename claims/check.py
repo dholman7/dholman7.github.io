@@ -137,6 +137,35 @@ def scenario_count() -> str:
     )
 
 
+# --- storywright and the gate's power -------------------------------------------------------
+
+
+def guard_probes(kind: str) -> str:
+    """How many repair-guard probes CI runs: `rejects` (weakenings) or `allows` (real repairs)."""
+    out = run(
+        # The full test-name prefix: a bare "allows" also matches the probe "swallows it ...".
+        ["uv", "run", "pytest", "--collect-only", "-q", "tests/test_guards.py", "-k"]
+        + [f"test_the_guard_{kind}"],
+        REPOS / "storywright",
+    )
+    count = re.search(r"test_guards\.py: (\d+)", out)
+    if not count:
+        raise RuntimeError(f"no probe count in pytest output:\n{out[-1000:]}")
+    return count.group(1)
+
+
+@cache
+def gate_power_at_20() -> tuple[str, str]:
+    """(paired, overlap) detection rates for a 20-point drop at 20 tasks, 3 trials."""
+    out = run(
+        ["uv", "run", "aeg", "power", "--trials", "3", "--drops", "0.2"], REPOS / "agent-eval-gate"
+    )
+    row = re.search(r"\| 20 pts \| (\d+%) / (\d+%) \|", out)
+    if not row:
+        raise RuntimeError(f"no 20-point row in aeg power output:\n{out[-1000:]}")
+    return row.group(1), row.group(2)
+
+
 # --- agent-dev-skills (review-loop) ----------------------------------------------------------
 
 
@@ -200,6 +229,10 @@ EXTRACTORS: dict[str, Callable[[], str]] = {
     ],
     "tel.runs": lambda: str(len(list((REPOS / "agent-eval-gate" / "baselines").glob("*.json")))),
     "spend.published": lambda: f"${published_spend():.2f}",
+    "sw.guard.rejects": lambda: guard_probes("rejects"),
+    "sw.guard.allows": lambda: guard_probes("allows"),
+    "gate.power20": lambda: gate_power_at_20()[0],
+    "gate.overlap20": lambda: gate_power_at_20()[1],
 }
 
 

@@ -393,7 +393,7 @@ make check <span class="c"># backend lint, types, tests</span></pre></div>
         <dl class="facts">
           <div><dt>Proves</dt><dd>Agent evaluation that holds up: frozen dev/held-out split, confidence intervals, record and replay</dd></div>
           <div><dt>Stack</dt><dd>Python, Playwright, OpenTelemetry, GitHub Actions composite action</dd></div>
-          <div><dt>Evidence</dt><dd>Every seeded bug is proven catchable by a reference test. The gate fails a PR when a result's confidence interval falls entirely below the baseline's.</dd></div>
+          <div><dt>Evidence</dt><dd>Every seeded bug is proven catchable by a reference test. The gate pairs runs task by task and fails a PR only on a drop that is both significant and at least 5 points. At 20 tasks × 3 trials it catches a 20-point drop <span data-claim="gate.power20">87%</span> of the time (interval overlap: <span data-claim="gate.overlap20">47%</span>), and the README says what it can't see.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/agent-eval-gate">Repository</a></div>
       </div>
@@ -414,7 +414,7 @@ uv run aeg gate --baseline baselines/reference-dev.json --current results/latest
       <div class="about">
         <span class="chip agent">Agent</span>
         <h3>Storywright</h3>
-        <p>Turns a user story into Playwright API or UI tests and proves they work. It reads the repo, writes the test, runs it against the real app, and repairs what fails. A deterministic guard rejects any repair that drops the task's test or cuts its assertions.</p>
+        <p>Turns a user story into Playwright API or UI tests and proves they work. It reads the repo, writes the test, runs it against the real app, and repairs what fails. A deterministic guard parses every repair and rejects it for testing less: CI checks it against <span data-claim="sw.guard.rejects">30</span> ways to weaken a test, and <span data-claim="sw.guard.allows">13</span> real repairs it must allow.</p>
         <dl class="facts">
           <div><dt>Proves</dt><dd>LLM application development, tool orchestration, and failure handling</dd></div>
           <div><dt>Stack</dt><dd>LangGraph, Anthropic SDK (structured outputs, prompt caching), MCP client, Jira Cloud API</dd></div>
@@ -446,7 +446,7 @@ uv run storywright publish --repo ../vendor-intake-app --jira KAN-1 --yes</pre><
         <dl class="facts">
           <div><dt>Proves</dt><dd>Claude Code skills and plugins, plus precision measured, not assumed</dd></div>
           <div><dt>Stack</dt><dd>Claude Code plugin, Python CLI, GitHub Action, Conventional Comments</dd></div>
-          <div><dt>Evidence</dt><dd>Opus 5.5 comments on <span data-claim="rl.opus.caught">29</span> of <span data-claim="rl.bugs">32</span> seeded bugs, with <span data-claim="rl.false_alarms">0</span> false alarms in <span data-claim="rl.clean_total">24</span> harmless changes, <span data-claim="rl.clean_hard">14</span> of them built to look risky. One run each.</dd></div>
+          <div><dt>Evidence</dt><dd>Opus 5.5 comments on <span data-claim="rl.opus.caught">29</span> of <span data-claim="rl.bugs">32</span> seeded bugs, with <span data-claim="rl.false_alarms">0</span> false alarms in <span data-claim="rl.clean_total">24</span> harmless changes, <span data-claim="rl.clean_hard">14</span> of them built to look risky. The same in each of 3 runs.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/agent-dev-skills">Repository</a></div>
       </div>

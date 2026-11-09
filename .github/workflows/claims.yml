@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Clone the repos the pages describe
         run: |
-          for r in dholman7 vendor-intake-app agent-eval-gate agent-dev-skills ci-context-mcp; do
+          for r in dholman7 vendor-intake-app agent-eval-gate storywright agent-dev-skills ci-context-mcp; do
             git clone --quiet --depth 1 "https://github.com/dholman7/$r" "repos/$r"
           done
       - uses: astral-sh/setup-uv@v10.3.3
