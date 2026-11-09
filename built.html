@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How This Was Built</title>
+<meta name="description" content="How Dan Holman built a six-project AI-agent portfolio with Claude Code as the implementer: the working method, and five times a result or a diagnosis was wrong and how it was caught.">
+<meta property="og:title" content="How This Was Built">
+<meta property="og:description" content="Claude Code wrote the code. These are the decisions, the gates, and the times something was wrong.">
+<meta property="og:url" content="https://dholman7.github.io/built.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://dholman7.github.io/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Same tokens as index.html; one reading column of case studies. */
+:root {
+  --ground: #f4f5f8;
+  --surface: #ffffff;
+  --ink: #151b29;
+  --muted: #586276;
+  --rule: #dce0e8;
+  --agent: #2850d6;
+  --eval: #0b8574;
+  --code-bg: #eef0f5;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #11141b; --surface: #191e28; --ink: #e7eaf0; --muted: #9aa3b6; --rule: #2a3140;
+    --agent: #7e9cff; --eval: #3fc3ac; --code-bg: #0d1016; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #11141b; --surface: #191e28; --ink: #e7eaf0; --muted: #9aa3b6; --rule: #2a3140;
+  --agent: #7e9cff; --eval: #3fc3ac; --code-bg: #0d1016; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 1rem/1.6 var(--body);
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 46rem; margin-inline: auto; padding-block: 2.5rem 5rem; display: grid; gap: 3rem; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 4.5vw, 2.75rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1.2rem; font-weight: 600; }
+p, ul { margin: 0; }
+ul { padding-left: 1.2rem; display: grid; gap: 0.4rem; }
+a { color: var(--agent); text-underline-offset: 0.18em; }
+a:focus-visible { outline: 2px solid var(--agent); outline-offset: 2px; border-radius: 3px; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+header { display: grid; gap: 1rem; }
+.back { font-family: var(--mono); font-size: 0.85rem; }
+.lede { color: var(--muted); font-size: 1.125rem; }
+section { display: grid; gap: 1rem; }
+.cases { display: grid; gap: 1.25rem; }
+.case { background: var(--surface); border: 1px solid var(--rule); border-left: 4px solid var(--eval); border-radius: 10px; padding: 1.2rem 1.4rem; display: grid; gap: 0.75rem; }
+.case dl { margin: 0; display: grid; gap: 0.55rem; }
+.case dl div { display: grid; grid-template-columns: 7.5rem 1fr; gap: 0.75rem; }
+.case dt { color: var(--muted); font-size: 0.88rem; padding-top: 0.1rem; }
+.case dd { margin: 0; }
+@media (max-width: 34rem) { .case dl div { grid-template-columns: 1fr; gap: 0.1rem; } }
+.case .links { font-size: 0.9rem; color: var(--muted); }
+footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rule); padding-top: 1.25rem; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <a class="back" href="./">← Portfolio</a>
+  <h1>How this was built</h1>
+  <p class="lede">Claude Code wrote nearly all of the code in these six repositories, and every commit says so in a <code>Co-Authored-By</code> trailer. This page covers my part: the decisions, the gates every change had to pass, and five times something was wrong and how it got caught.</p>
+</header>
+
+<section aria-labelledby="method">
+  <h2 id="method">The working method</h2>
+  <ul>
+    <li><b>I set what each project had to prove</b> and the rules it couldn't break. The main one: no test is ever made to pass by weakening an assertion. A green test that hides a bug is worse than a red one.</li>
+    <li><b>Every external write waited for my approval.</b> That covered every push, repository, Jira change, and PR comment. Each one was shown to me as an exact target and an exact change first.</li>
+    <li><b>Measurement came before claims.</b> Agents are scored against bugs seeded into the app, on tasks split into a tuning set and a held-out set. Cheap Haiku 5.5 runs were used for iteration; Opus 5.5 runs for numbers that get published.</li>
+    <li><b>Reviewing and reporting were separate steps.</b> Findings, including the agent's own, were re-checked against the code before anyone acted on them.</li>
+  </ul>
+  <p>The published benchmark runs cost <span data-claim="spend.published">$5.04</span> in API calls in total.</p>
+</section>
+
+<section aria-labelledby="cases">
+  <h2 id="cases">Five things that were wrong</h2>
+  <div class="cases">
+
+    <article class="case">
+      <h3>The agent was right and the spec was wrong</h3>
+      <dl>
+        <div><dt>What happened</dt><dd>On task REV-03, Storywright kept reporting an app defect instead of producing a passing test. The scenario said a low-confidence extraction has confidence 0.40, but the app correctly produces 0.30.</dd></div>
+        <div><dt>How it was caught</dt><dd>The benchmark records each trial's diagnosis. Reading the failed trials showed the agent's diagnosis was correct and the Gherkin was not.</dd></div>
+        <div><dt>What changed</dt><dd>The scenario was fixed in the app. The benchmark wasn't edited in place: v1 stays frozen with the defect documented, and v2 carries the fix, so old results stay comparable.</dd></div>
+      </dl>
+      <p class="links"><a href="https://github.com/dholman7/agent-eval-gate/commit/f3b41ed">f3b41ed</a> · <a href="https://github.com/dholman7/agent-eval-gate/commit/038496f">038496f</a></p>
+    </article>
+
+    <article class="case">
+      <h3>The first diagnosis was wrong</h3>
+      <dl>
+        <div><dt>What happened</dt><dd>A UI benchmark task (UI-03) passed locally but failed validation in CI. The first explanation, concurrent SQLite writes during setup, was plausible. A fix for it was committed, and CI still failed.</dd></div>
+        <div><dt>How it was caught</dt><dd>The fix also made validation print the first failure. The real cause was the Next.js dev-tools button, which is also named "Next" and collided with the pager's "Next" button.</dd></div>
+        <div><dt>What changed</dt><dd>A new rule, PW-14 (match control names exactly), enforced by lint in the app, the shared Playwright skill, and Storywright's prompt, so the whole class of bug can't come back.</dd></div>
+      </dl>
+      <p class="links"><a href="https://github.com/dholman7/agent-eval-gate/commit/244daa1">244daa1</a> (the wrong fix) · <a href="https://github.com/dholman7/agent-eval-gate/commit/c5c93ab">c5c93ab</a> · <a href="https://github.com/dholman7/vendor-intake-app/commit/47255a9">47255a9</a></p>
+    </article>
+
+    <article class="case">
+      <h3>A shortcut corrupted the harness</h3>
+      <dl>
+        <div><dt>What happened</dt><dd>To save time, each agent's private copy of the app shared the base Python environment through a symlink. Running a tool inside a copy quietly re-pointed the base environment's install at that copy.</dd></div>
+        <div><dt>How it was caught</dt><dd>The base environment was found pointing at a deleted directory. Sequential runs had only worked because scoring re-synced it, and parallel trials would have run each other's code.</dd></div>
+        <div><dt>What changed</dt><dd>Every copy now builds its own environment from uv's cache, in both the benchmark and review-loop's eval.</dd></div>
+      </dl>
+      <p class="links"><a href="https://github.com/dholman7/agent-eval-gate/commit/3bbb13a">3bbb13a</a> · <a href="https://github.com/dholman7/agent-dev-skills/commit/62a5c9f">62a5c9f</a></p>
+    </article>
+
+    <article class="case">
+      <h3>A prompt rewrite lost a rule</h3>
+      <dl>
+        <div><dt>What happened</dt><dd>Storywright v0.3 moved one rule out of its prompt and into the target repo's test guide (<code>AGENTS.md</code>): a failed status assertion must show the response body. The benchmark's target commit predates that guide, so the rule disappeared there. On a 422, the model then blamed the app for its own mistake, and held-out success fell from 58/60 to 55/60.</dd></div>
+        <div><dt>How it was caught</dt><dd>The drop showed up in the next held-out run, where all three new failures carried the same false "app defect" diagnosis.</dd></div>
+        <div><dt>What changed</dt><dd>The prompt states the rule again for every repo, and a regression test pins it. Because a held-out result triggered this fix, the held-out scores aren't blind, which is why the landing page says so.</dd></div>
+      </dl>
+      <p class="links"><a href="https://github.com/dholman7/storywright/commit/98fa237">98fa237</a></p>
+    </article>
+
+    <article class="case">
+      <h3>The dashboard headline showed the wrong agent</h3>
+      <dl>
+        <div><dt>What happened</dt><dd>The dashboard's top line read "50% of bugs caught". That was the one-call Opus baseline, not Storywright.</dd></div>
+        <div><dt>How it was caught</dt><dd>I noticed it reading the live dashboard as a visitor would.</dd></div>
+        <div><dt>What changed</dt><dd>The overview now groups runs into the agent, its baselines, and anchors. The headline compares the agent with a baseline on the same model, and every title names the benchmark version.</dd></div>
+      </dl>
+      <p class="links"><a href="https://github.com/dholman7/agent-telemetry/commit/0f3e2ae">0f3e2ae</a></p>
+    </article>
+
+  </div>
+</section>
+
+<section aria-labelledby="reviewer">
+  <h2 id="reviewer">The reviewer, reviewed</h2>
+  <p>review-loop was tried on the first four real agent-written pull requests, without posting, before it was trusted with anything. Every comment was then checked by hand against the code. On Haiku 5.5 it made five comments, and one held up. On Opus 5.5 it made two, and both held up. Those two were applied in <a href="https://github.com/dholman7/vendor-intake-app/pull/5">PR #5</a>, and the GitHub Action now defaults to Opus. Neither model posted anything a person hadn't approved.</p>
+</section>
+
+<footer>Dan Holman · <a href="./">Portfolio</a> · <a href="https://github.com/dholman7">github.com/dholman7</a></footer>
+
+</main>
+</body>
+</html>

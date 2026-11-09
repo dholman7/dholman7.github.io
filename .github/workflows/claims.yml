@@ -1,0 +1,35 @@
+name: Claims
+
+# Recomputes every number on the portfolio pages and the profile README from the repos they
+# describe; fails on any drift. Weekly, so a change in another repo surfaces within days.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 7 * * 1" # Mondays, after agent-telemetry's 06:00 UTC rebuild
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  claims:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Clone the repos the pages describe
+        run: |
+          for r in dholman7 vendor-intake-app agent-eval-gate agent-dev-skills ci-context-mcp; do
+            git clone --quiet --depth 1 "https://github.com/dholman7/$r" "repos/$r"
+          done
+      - uses: astral-sh/setup-uv@v10.3.3
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: repos/vendor-intake-app/.nvmrc
+      - name: Install vendor-intake-app test dependencies
+        run: |
+          uv sync --project repos/vendor-intake-app/backend
+          npm ci --prefix repos/vendor-intake-app/e2e
+      - name: Check every claim
+        run: uv run claims/check.py --repos repos

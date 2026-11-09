@@ -9,6 +9,10 @@
 <meta property="og:description" content="Six public projects that build, test, and measure AI coding agents.">
 <meta property="og:url" content="https://dholman7.github.io/">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://dholman7.github.io/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
@@ -91,7 +95,7 @@ header.top { display: grid; gap: 1rem; }
 .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; margin-top: 0.5rem; }
 .result { background: var(--surface); padding: 1rem 1.1rem; display: grid; gap: 0.2rem; align-content: start; }
 .result b { font-family: var(--display); font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.result span { color: var(--muted); font-size: 0.92rem; }
+.result > span { color: var(--muted); font-size: 0.92rem; }
 
 /* Contents index */
 .contents { display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); gap: 0.6rem 1.5rem; margin: 0; padding: 0; list-style: none; }
@@ -186,15 +190,16 @@ footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rul
 <main>
 
 <header class="top">
-  <div class="who">Dan Holman, senior SDET moving into AI engineering. <a href="https://github.com/dholman7">github.com/dholman7</a></div>
+  <div class="who">Dan Holman, SDET who builds and evaluates AI coding agents. <a href="https://github.com/dholman7">github.com/dholman7</a></div>
   <h1>Six projects that build, test, and measure AI coding agents</h1>
   <p class="lede">Each project is public, runs on its own, and backs one claim from the resume with something you can run and check. Together they form one loop: an agent turns a Jira story into a verified Playwright test, a reviewer checks the pull request, and a benchmark measures whether any of it works.</p>
   <div class="results" aria-label="Headline results">
-    <div class="result"><b>97% vs 60%</b><span>Storywright vs a single Claude call on 60 held-out trials, same model</span></div>
-    <div class="result"><b>32 seeded bugs</b><span>hand-written defects the benchmark checks every generated test against</span></div>
-    <div class="result"><b>0 of 24</b><span>false alarms from review-loop on Opus 5.5, across two sets of harmless changes</span></div>
+    <div class="result"><b><span data-claim="sw.v2.rate">100%</span> vs <span data-claim="sc.v2.rate">53%</span></b><span>Storywright vs a single Claude call on <span data-claim="sw.v2.trials">60</span> held-out trials, same model</span></div>
+    <div class="result"><b><span data-claim="bench.bugs">42</span> seeded bugs</b><span>hand-written defects the benchmarks check every generated test against</span></div>
+    <div class="result"><b><span data-claim="rl.false_alarms">0</span> of <span data-claim="rl.clean_total">24</span></b><span>false alarms from review-loop on Opus 5.5, across two sets of harmless changes</span></div>
     <div class="result"><b>Story → Done</b><span>a Jira story becomes a merged, tested PR, and the issue closes itself</span></div>
   </div>
+  <p class="note">How to read these: Storywright's held-out scores aren't blind. Later versions were changed after earlier held-out results were seen, and the benchmark is now near its ceiling. A harder benchmark, frozen before any agent runs on it, is in progress. Every number on this page is recomputed from the repos by <a href="https://github.com/dholman7/dholman7.github.io/blob/main/claims/check.py">a CI check</a>. <a href="built.html">How this was built</a>.</p>
 </header>
 
 <section aria-labelledby="contents">
@@ -267,7 +272,7 @@ footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rul
 
         <rect class="node" x="226" y="206" width="378" height="70" rx="10"/>
         <text class="nname" x="415" y="236" text-anchor="middle">vendor-intake-app</text>
-        <text class="nsub" x="415" y="256" text-anchor="middle">Next.js + FastAPI app under test, 32 Gherkin scenarios</text>
+        <text class="nsub" x="415" y="256" text-anchor="middle">Next.js + FastAPI app under test, <tspan data-claim="vi.scenarios">42</tspan> Gherkin scenarios</text>
 
         <line class="edge" x1="310" y1="126" x2="310" y2="204" marker-end="url(#arrow)"/>
         <text class="elabel" x="318" y="170">runs tests against</text>
@@ -279,7 +284,7 @@ footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rul
         <!-- Row 3 -->
         <rect class="node eval" x="226" y="364" width="378" height="70" rx="10"/>
         <text class="nname" x="415" y="394" text-anchor="middle">agent-eval-gate</text>
-        <text class="nsub role-eval" x="415" y="414" text-anchor="middle">benchmark and CI gate, 32 tasks, 32 seeded bugs</text>
+        <text class="nsub role-eval" x="415" y="414" text-anchor="middle">benchmark and CI gate, <tspan data-claim="bench.tasks">42</tspan> tasks, <tspan data-claim="bench.bugs">42</tspan> seeded bugs</text>
 
         <rect class="node eval" x="646" y="364" width="378" height="70" rx="10"/>
         <text class="nname" x="835" y="394" text-anchor="middle">agent-telemetry</text>
@@ -360,9 +365,9 @@ done</pre>
         <h3>vendor-intake-app</h3>
         <p>A small but real vendor-onboarding product: members upload a W-9, insurance certificate, and contract; the app extracts fields; reviewers approve or reject. Every agent in the portfolio writes tests against it.</p>
         <dl class="facts">
-          <div><dt>Proves</dt><dd>React + TypeScript and Python in one product, built test-first</dd></div>
+          <div><dt>Proves</dt><dd>React + TypeScript and Python in one product, specified in Gherkin</dd></div>
           <div><dt>Stack</dt><dd>Next.js 16, React 19, FastAPI, SQLAlchemy, SQLite, Playwright, Docker</dd></div>
-          <div><dt>Evidence</dt><dd>68 backend tests (97% coverage), 27 Playwright tests with accessibility scans, 32 Gherkin scenarios</dd></div>
+          <div><dt>Evidence</dt><dd><span data-claim="vi.backend_tests">68</span> backend tests (<span data-claim="vi.coverage">97%</span> coverage), <span data-claim="vi.playwright_tests">30</span> Playwright tests with accessibility scans, <span data-claim="vi.scenarios">42</span> Gherkin scenarios</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/vendor-intake-app">Repository</a></div>
       </div>
@@ -384,11 +389,11 @@ make check <span class="c"># backend lint, types, tests</span></pre></div>
       <div class="about">
         <span class="chip eval">Measurement</span>
         <h3>agent-eval-gate</h3>
-        <p>A benchmark and CI gate for agents that write tests. Each of 32 tasks is one Gherkin scenario. A generated test counts only if it passes on the real app and fails when a hand-written bug is seeded in.</p>
+        <p>A benchmark and CI gate for agents that write tests. Each of its <span data-claim="bench.tasks">42</span> tasks (<span data-claim="bench.api_tasks">32</span> API, <span data-claim="bench.ui_tasks">10</span> UI) is one Gherkin scenario. A generated test counts only if it passes on the real app and fails when a hand-written bug is seeded in.</p>
         <dl class="facts">
           <div><dt>Proves</dt><dd>Agent evaluation that holds up: frozen dev/held-out split, confidence intervals, record and replay</dd></div>
           <div><dt>Stack</dt><dd>Python, Playwright, OpenTelemetry, GitHub Actions composite action</dd></div>
-          <div><dt>Evidence</dt><dd>Every seeded bug is proven catchable by a reference test. The gate fails a PR only when results drop by more than run-to-run noise.</dd></div>
+          <div><dt>Evidence</dt><dd>Every seeded bug is proven catchable by a reference test. The gate fails a PR when a result's confidence interval falls entirely below the baseline's.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/agent-eval-gate">Repository</a></div>
       </div>
@@ -409,11 +414,11 @@ uv run aeg gate --baseline baselines/reference-dev.json --current results/latest
       <div class="about">
         <span class="chip agent">Agent</span>
         <h3>Storywright</h3>
-        <p>Turns a user story into Playwright API tests and proves they work. It reads the repo, writes the test, runs it against the real app, and repairs what fails. A deterministic guard rejects any repair that weakens an assertion.</p>
+        <p>Turns a user story into Playwright API or UI tests and proves they work. It reads the repo, writes the test, runs it against the real app, and repairs what fails. A deterministic guard rejects any repair that drops the task's test or cuts its assertions.</p>
         <dl class="facts">
           <div><dt>Proves</dt><dd>LLM application development, tool orchestration, and failure handling</dd></div>
           <div><dt>Stack</dt><dd>LangGraph, Anthropic SDK (structured outputs, prompt caching), MCP client, Jira Cloud API</dd></div>
-          <div><dt>Evidence</dt><dd>97% of held-out trials (58/60) vs 60% for a single call, at $0.0028 per trial. Opus 5.5 went 20/20.</dd></div>
+          <div><dt>Evidence</dt><dd><span data-claim="sw.v2.rate">100%</span> of held-out trials (<span data-claim="sw.v2.frac">60/60</span>) vs <span data-claim="sc.v2.rate">53%</span> for a single call on the same model, at <span data-claim="sw.v2.cost">$0.0028</span> per trial. Opus 5.5 went <span data-claim="sw.opus.frac">20/20</span>, one trial per task.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/storywright">Repository</a></div>
       </div>
@@ -441,7 +446,7 @@ uv run storywright publish --repo ../vendor-intake-app --jira KAN-1 --yes</pre><
         <dl class="facts">
           <div><dt>Proves</dt><dd>Claude Code skills and plugins, plus precision measured, not assumed</dd></div>
           <div><dt>Stack</dt><dd>Claude Code plugin, Python CLI, GitHub Action, Conventional Comments</dd></div>
-          <div><dt>Evidence</dt><dd>Opus 5.5 catches 29 of 32 seeded bugs, with 0 false alarms in 24 harmless changes, 14 of them built to look risky.</dd></div>
+          <div><dt>Evidence</dt><dd>Opus 5.5 comments on <span data-claim="rl.opus.caught">29</span> of <span data-claim="rl.bugs">32</span> seeded bugs, with <span data-claim="rl.false_alarms">0</span> false alarms in <span data-claim="rl.clean_total">24</span> harmless changes, <span data-claim="rl.clean_hard">14</span> of them built to look risky. One run each.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/agent-dev-skills">Repository</a></div>
       </div>
@@ -466,7 +471,7 @@ uv run review-loop pr --repo owner/name --pr 42</pre></div>
         <dl class="facts">
           <div><dt>Proves</dt><dd>MCP server design with a real security model</dd></div>
           <div><dt>Stack</dt><dd>MCP Python SDK 2.x, httpx, GitHub REST API</dd></div>
-          <div><dt>Evidence</dt><dd>Six read-only tools. GET-only client, repo allowlist, and the token never leaves GitHub.</dd></div>
+          <div><dt>Evidence</dt><dd><span data-claim="mcp.tools">Six</span> read-only tools. GET-only client, repo allowlist, and the token never leaves GitHub. Coverage is read from the pytest-cov summary line.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/ci-context-mcp">Repository</a></div>
       </div>
@@ -490,7 +495,7 @@ claude mcp add ci-context \
         <dl class="facts">
           <div><dt>Proves</dt><dd>Observability for agents, and React data visualization without a chart library</dd></div>
           <div><dt>Stack</dt><dd>Next.js 16 static export, React 19, OpenTelemetry traces, GitHub Pages</dd></div>
-          <div><dt>Evidence</dt><dd>12 runs and their traces, rebuilt weekly from agent-eval-gate's published results.</dd></div>
+          <div><dt>Evidence</dt><dd><span data-claim="tel.runs">17</span> runs and their traces, rebuilt weekly from agent-eval-gate's published results.</dd></div>
         </dl>
         <div class="links"><a href="https://dholman7.github.io/agent-telemetry/">Live site</a><a href="https://github.com/dholman7/agent-telemetry">Repository</a></div>
       </div>
@@ -549,17 +554,17 @@ npm run build   <span class="c"># static site in out/</span></pre></div>
   </div>
   <dl class="glossary">
     <div><dt>Seeded bug</dt><dd>A small, deliberate defect put into a copy of the app. A good test fails when it is present.</dd></div>
-    <div><dt>Held-out split</dt><dd>Tasks kept aside while prompts are tuned, then used for scoring, so results aren't fitted to the test.</dd></div>
-    <div><dt>Confidence interval</dt><dd>The range a success rate likely falls in. Two agents only differ when their ranges don't overlap.</dd></div>
+    <div><dt>Held-out split</dt><dd>Tasks set aside from prompt tuning and used for scoring. A held-out score is only blind if no earlier result on those tasks shaped the agent; Storywright's current ones aren't.</dd></div>
+    <div><dt>Confidence interval</dt><dd>The range a success rate likely falls in. When two agents' ranges don't overlap, the difference isn't noise.</dd></div>
     <div><dt>Gherkin</dt><dd>Plain-language acceptance criteria written as Given / When / Then. Every task starts from one.</dd></div>
     <div><dt>MCP</dt><dd>Model Context Protocol, the standard way to give an AI assistant tools such as "read this CI log".</dd></div>
     <div><dt>dev and report profiles</dt><dd>Haiku 5.5 for cheap iteration, Opus 5.5 for any number that gets published or acted on.</dd></div>
-    <div><dt>Playwright</dt><dd>A browser and API testing framework. All generated tests are Playwright API tests in TypeScript.</dd></div>
+    <div><dt>Playwright</dt><dd>A browser and API testing framework. All generated tests are Playwright API or UI tests in TypeScript.</dd></div>
     <div><dt>Conventional Comments</dt><dd>Review comments that start with a label such as <code>issue</code> or <code>nitpick</code> and say whether they block the merge.</dd></div>
   </dl>
 </section>
 
-<footer>Contact: <a href="https://linkedin.com/in/danxholman">LinkedIn</a> or danxholman@gmail.com. All six repositories are MIT-licensed and written independently; source and history are at <a href="https://github.com/dholman7">github.com/dholman7</a>.</footer>
+<footer>Contact: <a href="https://linkedin.com/in/danxholman">LinkedIn</a> or danxholman@gmail.com. All six repositories are MIT-licensed and written independently; source and history are at <a href="https://github.com/dholman7">github.com/dholman7</a>. <a href="built.html">How this was built</a>, with Claude Code as the implementer.</footer>
 
 </main>
 <script>
