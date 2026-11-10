@@ -192,6 +192,25 @@ def fraction(cell: str) -> tuple[int, int]:
     return int(match.group(1)), int(match.group(2))
 
 
+def judge_kappa() -> str:
+    """Cohen's kappa of review-loop's Opus judge vs hand labels, run exactly as the README says
+    (its `--exclude` ids are read from that command, so the two can't drift apart)."""
+    repo = REPOS / "agent-dev-skills"
+    command = re.search(
+        r"review-loop agreement (evals/review/labels\.md) (\S+) \\\n\s+--exclude ([^\n`]+)",
+        (repo / "README.md").read_text(),
+    )
+    if not command:
+        raise RuntimeError("agent-dev-skills README no longer shows the agreement command")
+    labels, pattern, excluded = command.groups()
+    results = sorted(str(p.relative_to(repo)) for p in repo.glob(pattern))
+    out = run(
+        ["uv", "run", "review-loop", "agreement", labels, *results, "--exclude", *excluded.split()],
+        repo,
+    )
+    return f"{json.loads(out)['kappa']:.2f}"
+
+
 def rl_false_alarms() -> tuple[int, int]:
     bugs, hard = review_rows()[:2]
     easy_fa, easy_n = fraction(bugs[2])
@@ -233,6 +252,7 @@ EXTRACTORS: dict[str, Callable[[], str]] = {
     "sw.guard.allows": lambda: guard_probes("allows"),
     "gate.power20": lambda: gate_power_at_20()[0],
     "gate.overlap20": lambda: gate_power_at_20()[1],
+    "rl.judge_kappa": judge_kappa,
 }
 
 
