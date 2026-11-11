@@ -166,6 +166,18 @@ def gate_power_at_20() -> tuple[str, str]:
     return row.group(1), row.group(2)
 
 
+@cache
+def extraction_baseline() -> dict:
+    """vendor-intake-app's published extraction eval: Haiku 5.5, prompt v2, held-out, 3 trials."""
+    path = REPOS / "vendor-intake-app" / "backend" / "evals" / "extraction" / "baselines"
+    return json.loads((path / "haiku-heldout.json").read_text())
+
+
+def extraction_documents() -> str:
+    truth = REPOS / "vendor-intake-app" / "backend" / "evals" / "extraction" / "data" / "truth.yaml"
+    return str(len(yaml.safe_load(truth.read_text())["docs"]))
+
+
 # --- agent-dev-skills (review-loop) ----------------------------------------------------------
 
 
@@ -253,6 +265,14 @@ EXTRACTORS: dict[str, Callable[[], str]] = {
     "gate.power20": lambda: gate_power_at_20()[0],
     "gate.overlap20": lambda: gate_power_at_20()[1],
     "rl.judge_kappa": judge_kappa,
+    "ext.accuracy": lambda: pct(
+        extraction_baseline()["summary"]["field_accuracy"]["successes"],
+        extraction_baseline()["summary"]["field_accuracy"]["n"],
+    ),
+    "ext.confident_wrong": lambda: str(
+        extraction_baseline()["summary"]["confident_wrong"]["successes"]
+    ),
+    "ext.documents": extraction_documents,
 }
 
 
