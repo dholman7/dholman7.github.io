@@ -90,7 +90,7 @@ footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rul
     <li><b>Measurement came before claims.</b> Agents are scored against bugs seeded into the app, on tasks split into a tuning set and a held-out set. Cheap Haiku 5.5 runs were used for iteration; Opus 5.5 runs for numbers that get published.</li>
     <li><b>Reviewing and reporting were separate steps.</b> Findings, including the agent's own, were re-checked against the code before anyone acted on them.</li>
   </ul>
-  <p>The published benchmark runs cost <span data-claim="spend.published">$5.04</span> in API calls in total.</p>
+  <p>The published benchmark runs billed to the API cost <span data-claim="spend.published">$5.04</span> in total. When the API credits ran out, the next <span data-claim="spend.subscription_runs">4</span> published runs (the v3 blind held-out set) and the prompt-injection red teams went through headless Claude Code on a Claude subscription instead, with the API key stripped from its environment.</p>
 </section>
 
 <section aria-labelledby="cases">
