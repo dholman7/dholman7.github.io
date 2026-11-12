@@ -56,39 +56,69 @@ def bench_items(path: str, key: str) -> list:
     return yaml.safe_load((REPOS / "agent-eval-gate" / "benchmarks" / path).read_text())[key]
 
 
-STORYWRIGHT = "storywright-v0.3-v2-heldout-k3"
-SINGLE_CALL = "single-call-v2-heldout-k3"
-STORYWRIGHT_OPUS = "storywright-v0.2-report-heldout"
 API_BENCH = "vendor-intake/v2"
 UI_BENCH = "vendor-intake-ui/v1"
+# The blind v3 held-out runs (agent-eval-gate's README, "Blind benchmark (v3)").
+V3 = {
+    "storywright": "storywright-v3-heldout-k3",
+    "claude-code": "claude-code-v3-heldout-k3",
+    "single-call": "single-call-v3-heldout-k3",
+    "storywright-opus": "storywright-v3-report-heldout-k3",
+}
+# Published runs billed to a Claude subscription through the claude-code transports. Their
+# costs are list-price estimates, not money spent, so API spend leaves them out.
+SUBSCRIPTION_BENCHMARKS = {"vendor-intake@v3"}
 
 
-def same_model_comparison() -> None:
-    """The headline compares Storywright and the single call; it's only fair on the same setup."""
-    keys = ("benchmark", "split", "trials", "model")
-    a, b = baseline(STORYWRIGHT)["meta"], baseline(SINGLE_CALL)["meta"]
-    if any(a[k] != b[k] for k in keys):
-        raise RuntimeError(f"headline runs differ: {[(k, a[k], b[k]) for k in keys if a[k] != b[k]]}")
+def v3(agent: str, metric: str) -> dict:
+    """A v3 held-out rate, checked to be on the same benchmark, split, and trials as the rest."""
+    keys = ("benchmark", "split", "trials")
+    first = baseline(V3["storywright"])["meta"]
+    meta = baseline(V3[agent])["meta"]
+    if any(meta[k] != first[k] for k in keys):
+        raise RuntimeError(f"v3 runs differ: {[(k, meta[k], first[k]) for k in keys if meta[k] != first[k]]}")
+    return rate(V3[agent], metric)
 
 
-def sw_rate() -> str:
-    same_model_comparison()
-    r = rate(STORYWRIGHT)
+def v3_pct(agent: str, metric: str = "bug_detection") -> str:
+    r = v3(agent, metric)
     return pct(r["successes"], r["n"])
 
 
-def sc_rate() -> str:
-    r = rate(SINGLE_CALL)
-    return pct(r["successes"], r["n"])
+@cache
+def v3_bug_p() -> str:
+    """The paired p for bug detection, Claude Code vs Storywright on Haiku, from `aeg gate`."""
+    base = f"baselines/{V3['claude-code']}.json"
+    current = f"baselines/{V3['storywright']}.json"
+    result = subprocess.run(
+        ["uv", "run", "aeg", "gate", "--baseline", base, "--current", current],
+        cwd=REPOS / "agent-eval-gate", capture_output=True, text=True, timeout=900,
+    )  # exits 1 on a regression, which still prints the table
+    row = re.search(r"^\| bug detection \|.*\| (\d\.\d+) \|", result.stdout, re.M)
+    if not row:
+        raise RuntimeError(f"no bug-detection row in aeg gate output:\n{result.stdout[-1000:]}")
+    return f"{float(row.group(1)):.2f}"
+
+
+def heldout_tasks(bench: str) -> str:
+    return str(sum(t["split"] == "heldout" for t in bench_items(f"{bench}/tasks.yaml", "tasks")))
 
 
 def published_spend() -> float:
-    """API cost of every published run: mean cost per trial times trials."""
+    """API cost of every published run billed to the API: mean cost per trial times trials."""
     total = 0.0
     for path in (REPOS / "agent-eval-gate" / "baselines").glob("*.json"):
-        cost = json.loads(path.read_text())["summary"].get("cost_usd") or {}
+        result = json.loads(path.read_text())
+        if result["meta"]["benchmark"] in SUBSCRIPTION_BENCHMARKS:
+            continue
+        cost = result["summary"].get("cost_usd") or {}
         total += (cost.get("value") or 0) * (cost.get("n") or 0)
     return total
+
+
+def subscription_runs() -> str:
+    paths = (REPOS / "agent-eval-gate" / "baselines").glob("*.json")
+    return str(sum(json.loads(p.read_text())["meta"]["benchmark"] in SUBSCRIPTION_BENCHMARKS for p in paths))
 
 
 def tasks_total() -> int:
@@ -178,6 +208,46 @@ def extraction_documents() -> str:
     return str(len(yaml.safe_load(truth.read_text())["docs"]))
 
 
+# --- prompt injection (three red teams) ------------------------------------------------------
+
+
+def attack_runs(*names: str) -> tuple[int, int]:
+    """Attacked trials over all trials, summed over agent-eval-gate attack runs."""
+    hits = total = 0
+    for name in names:
+        path = REPOS / "agent-eval-gate" / "baselines" / "attacks" / f"{name}.json"
+        summary = json.loads(path.read_text())["summary"]["attack_success"]
+        hits, total = hits + summary["successes"], total + summary["n"]
+    return hits, total
+
+
+def review_attacks(stage: str) -> tuple[int, int]:
+    """Seeded bugs hidden by a payload, over all trials, Haiku and Opus, before or after."""
+    hits = total = 0
+    for model in ("haiku", "opus"):
+        path = REPOS / "agent-dev-skills" / "evals" / "review" / "attacks" / f"{stage}-{model}.json"
+        rate_ = json.loads(path.read_text())["attack_success"]
+        hits, total = hits + rate_["k"], total + rate_["n"]
+    return hits, total
+
+
+def ci_attacks() -> tuple[int, int]:
+    """CI-log payloads that worked, over all scored trials, every model and policy."""
+    hits = total = 0
+    for path in (REPOS / "ci-context-mcp" / "redteam" / "results").glob("*.json"):
+        for row in json.loads(path.read_text())["summary"].values():
+            hits, total = hits + row["attack_success"]["successes"], total + row["attack_success"]["n"]
+    return hits, total
+
+
+def frac(pair: tuple[int, int]) -> str:
+    return f"{pair[0]}/{pair[1]}"
+
+
+UNDEFENDED = ("storywright-undefended-haiku", "storywright-undefended-opus")
+DEFENDED = ("storywright-defended-haiku", "storywright-defended-opus")
+
+
 # --- agent-dev-skills (review-loop) ----------------------------------------------------------
 
 
@@ -233,12 +303,24 @@ def rl_false_alarms() -> tuple[int, int]:
 # --- extractors ------------------------------------------------------------------------------
 
 EXTRACTORS: dict[str, Callable[[], str]] = {
-    "sw.v2.rate": sw_rate,
-    "sw.v2.frac": lambda: "{successes}/{n}".format(**rate(STORYWRIGHT)),
-    "sw.v2.trials": lambda: str(rate(STORYWRIGHT)["n"]),
-    "sw.v2.cost": lambda: f"${rate(STORYWRIGHT, 'cost_usd')['value']:.4f}",
-    "sc.v2.rate": sc_rate,
-    "sw.opus.frac": lambda: "{successes}/{n}".format(**rate(STORYWRIGHT_OPUS)),
+    "v3.tasks": lambda: heldout_tasks("vendor-intake/v3"),
+    "v3.sw.bugs": lambda: v3_pct("storywright"),
+    "v3.cc.bugs": lambda: v3_pct("claude-code"),
+    "v3.sc.bugs": lambda: v3_pct("single-call"),
+    "v3.opus.bugs": lambda: v3_pct("storywright-opus"),
+    "v3.sw.success": lambda: v3_pct("storywright", "task_success"),
+    "v3.sw.cost": lambda: f"${v3('storywright', 'cost_usd')['value']:.4f}",
+    "v3.cc.cost": lambda: f"${v3('claude-code', 'cost_usd')['value']:.4f}",
+    "v3.bug_p": v3_bug_p,
+    "inj.sw.before": lambda: frac(attack_runs(*UNDEFENDED)),
+    "inj.sw.after": lambda: frac(attack_runs(*DEFENDED)),
+    "inj.cc": lambda: frac(attack_runs("claude-code")),
+    "inj.sc": lambda: frac(attack_runs("single-call-haiku")),
+    "inj.rl.before": lambda: frac(review_attacks("before")),
+    "inj.rl.after": lambda: frac(review_attacks("after")),
+    "inj.ci": lambda: frac(ci_attacks()),
+    "ext.calibration": lambda: f"{extraction_baseline()['summary']['calibration_error']:.3f}",
+    "spend.subscription_runs": subscription_runs,
     "bench.tasks": lambda: str(tasks_total()),
     "bench.api_tasks": lambda: str(len(bench_items(f"{API_BENCH}/tasks.yaml", "tasks"))),
     "bench.ui_tasks": lambda: str(len(bench_items(f"{UI_BENCH}/tasks.yaml", "tasks"))),

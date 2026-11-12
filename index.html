@@ -132,6 +132,7 @@ figcaption { color: var(--muted); font-size: 0.95rem; max-width: 70ch; }
 .path { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 1.1rem 1.2rem; display: grid; gap: 0.6rem; align-content: start; }
 .path .time { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
 .path ol { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+.path ul.flat { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.25rem; }
 
 /* Project cards */
 .projects { display: grid; gap: 1.25rem; }
@@ -194,14 +195,42 @@ footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rul
   <h1>Six projects that build, test, and measure AI coding agents</h1>
   <p class="lede">Each project is public, runs on its own, and backs one claim from the resume with something you can run and check. Together they form one loop: an agent turns a Jira story into a verified Playwright test, a reviewer checks the pull request, and a benchmark measures whether any of it works.</p>
   <div class="results" aria-label="Headline results">
-    <div class="result"><b><span data-claim="sw.v2.rate">100%</span> vs <span data-claim="sc.v2.rate">53%</span></b><span>Storywright vs a single Claude call on <span data-claim="sw.v2.trials">60</span> held-out trials, same model</span></div>
-    <div class="result"><b><span data-claim="bench.bugs">42</span> seeded bugs</b><span>hand-written defects the benchmarks check every generated test against</span></div>
-    <div class="result"><b><span data-claim="rl.false_alarms">0</span> of <span data-claim="rl.clean_total">24</span></b><span>false alarms from review-loop on Opus 5.5, across two sets of harmless changes</span></div>
-    <div class="result"><b>Story → Done</b><span>a Jira story becomes a merged, tested PR, and the issue closes itself</span></div>
+    <div class="result"><b><span data-claim="v3.sw.bugs">86%</span> · <span data-claim="v3.cc.bugs">89%</span> · <span data-claim="v3.sc.bugs">7%</span></b><span>seeded bugs caught on <span data-claim="v3.tasks">15</span> blind held-out tasks: Storywright, plain Claude Code, and one prompt, all on Haiku 5.5</span></div>
+    <div class="result"><b><span data-claim="ext.accuracy">99%</span>, <span data-claim="ext.confident_wrong">0</span> confidently wrong</b><span>Claude document extraction on held-out documents, every value grounded in the source (calibration error <span data-claim="ext.calibration">0.066</span>)</span></div>
+    <div class="result"><b><span data-claim="inj.sw.before">7/72</span> → <span data-claim="inj.sw.after">0/72</span></b><span>Storywright trials hijacked by planted prompt injection, before and after its defenses, on Haiku and Opus</span></div>
+    <div class="result"><b><span data-claim="gate.power20">87%</span></b><span>chance the paired CI gate catches a 20-point drop at 20 tasks × 3 trials (interval overlap: <span data-claim="gate.overlap20">47%</span>)</span></div>
   </div>
-  <p class="note">How to read these: Storywright's held-out scores aren't blind. Later versions were changed after earlier held-out results were seen, and the benchmark is now near its ceiling. A harder benchmark, frozen before any agent runs on it, is in progress. Every number on this page is recomputed from the repos by <a href="https://github.com/dholman7/dholman7.github.io/blob/main/claims/check.py">a CI check</a>. <a href="built.html">How this was built</a>.</p>
+  <p class="note">How to read these: the v3 tasks were written and frozen before any agent ran on them, and each agent ran once. Storywright and plain Claude Code are statistically level on bugs caught (p = <span data-claim="v3.bug_p">0.25</span>, paired by task), and Storywright costs <span data-claim="v3.sw.cost">$0.0030</span> per trial against <span data-claim="v3.cc.cost">$0.0101</span>. Those runs were billed to a Claude subscription, so costs are list-price estimates. Every number on this page is recomputed from the repos by <a href="https://github.com/dholman7/dholman7.github.io/blob/main/claims/check.py">a CI check</a>. <a href="built.html">How this was built</a>.</p>
 </header>
 
+<section aria-labelledby="stories">
+  <div class="section-head">
+    <h2 id="stories">Three things this portfolio shows</h2>
+    <p>The six projects add up to three claims, each backed by results you can rerun.</p>
+  </div>
+  <div class="paths">
+    <div class="path">
+      <span class="time">Agents that test</span>
+      <h3>An agent writes the test; another reviews the PR</h3>
+      <p><a href="#storywright">Storywright</a> turns a Jira story into a Playwright test it has run against the real app, then opens the pull request. On blind tasks it catches <span data-claim="v3.sw.bugs">86%</span> of seeded bugs on Haiku and <span data-claim="v3.opus.bugs">95%</span> on Opus. <a href="#agent-dev-skills">review-loop</a> only posts comments that quote real code and survive a second check.</p>
+    </div>
+    <div class="path">
+      <span class="time">Testing AI features</span>
+      <h3>Evals for a feature built on Claude, and red teams for the agents</h3>
+      <p><a href="https://github.com/dholman7/vendor-intake-app#extraction-evals">Extraction evals</a> score Claude against documents with known answers, with a keyless CI gate that replays recorded outputs. Three <a href="https://dholman7.github.io/agent-telemetry/attacks/">prompt-injection red teams</a> show how often each agent is hijacked, before and after a defense:</p>
+      <ul class="flat">
+        <li>Storywright: <span data-claim="inj.sw.before">7/72</span> → <span data-claim="inj.sw.after">0/72</span> (<a href="https://github.com/dholman7/storywright/blob/main/docs/adr/0002-prompt-injection-defenses.md">ADR</a>)</li>
+        <li>review-loop: <span data-claim="inj.rl.before">5/48</span> → <span data-claim="inj.rl.after">0/48</span> (<a href="https://github.com/dholman7/agent-dev-skills/blob/main/docs/adr/0001-pr-text-is-a-claim.md">ADR</a>)</li>
+        <li>ci-context-mcp: <span data-claim="inj.ci">0/270</span> under any log policy (<a href="https://github.com/dholman7/ci-context-mcp/blob/main/docs/adr/0001-log-policy.md">ADR</a>)</li>
+      </ul>
+    </div>
+    <div class="path">
+      <span class="time">Measurement you can trust</span>
+      <h3>Numbers that hold up to a second look</h3>
+      <p><a href="#agent-eval-gate">agent-eval-gate</a> scores agents against bugs seeded into the app, including ones picked by mutation testing, and gates pull requests with a paired test that has a stated power. An LLM judge counts only after it agrees with blind hand labels (κ = <span data-claim="rl.judge_kappa">0.86</span>). A <a href="https://dholman7.github.io/agent-telemetry/">dashboard</a> opens every trial, and a CI check recomputes every number on this page.</p>
+    </div>
+  </div>
+</section>
 <section aria-labelledby="contents">
   <div class="section-head">
     <h2 id="contents">What's in this portfolio</h2>
@@ -272,7 +301,7 @@ footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rul
 
         <rect class="node" x="226" y="206" width="378" height="70" rx="10"/>
         <text class="nname" x="415" y="236" text-anchor="middle">vendor-intake-app</text>
-        <text class="nsub" x="415" y="256" text-anchor="middle">Next.js + FastAPI app under test, <tspan data-claim="vi.scenarios">42</tspan> Gherkin scenarios</text>
+        <text class="nsub" x="415" y="256" text-anchor="middle">Next.js + FastAPI app under test, <tspan data-claim="vi.scenarios">57</tspan> Gherkin scenarios</text>
 
         <line class="edge" x1="310" y1="126" x2="310" y2="204" marker-end="url(#arrow)"/>
         <text class="elabel" x="318" y="170">runs tests against</text>
@@ -367,7 +396,7 @@ done</pre>
         <dl class="facts">
           <div><dt>Proves</dt><dd>React + TypeScript and Python in one product, specified in Gherkin, with an LLM feature tested like any other</dd></div>
           <div><dt>Stack</dt><dd>Next.js 16, React 19, FastAPI, SQLAlchemy, SQLite, Playwright, Docker</dd></div>
-          <div><dt>Evidence</dt><dd><span data-claim="vi.backend_tests">92</span> backend tests (<span data-claim="vi.coverage">96%</span> coverage), <span data-claim="vi.playwright_tests">31</span> Playwright tests with accessibility scans, <span data-claim="vi.scenarios">42</span> Gherkin scenarios. Optional Claude extraction, with every value grounded in the document's own text: <span data-claim="ext.accuracy">99%</span> field accuracy on held-out documents from a <span data-claim="ext.documents">75</span>-document generated set, and <span data-claim="ext.confident_wrong">0</span> wrong values at high confidence.</dd></div>
+          <div><dt>Evidence</dt><dd><span data-claim="vi.backend_tests">92</span> backend tests (<span data-claim="vi.coverage">96%</span> coverage), <span data-claim="vi.playwright_tests">31</span> Playwright tests with accessibility scans, <span data-claim="vi.scenarios">57</span> Gherkin scenarios. Optional Claude extraction, with every value grounded in the document's own text: <span data-claim="ext.accuracy">99%</span> field accuracy on held-out documents from a <span data-claim="ext.documents">75</span>-document generated set, and <span data-claim="ext.confident_wrong">0</span> wrong values at high confidence.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/vendor-intake-app">Repository</a></div>
       </div>
@@ -389,11 +418,11 @@ make check <span class="c"># backend lint, types, tests</span></pre></div>
       <div class="about">
         <span class="chip eval">Measurement</span>
         <h3>agent-eval-gate</h3>
-        <p>A benchmark and CI gate for agents that write tests. Each of its <span data-claim="bench.tasks">42</span> tasks (<span data-claim="bench.api_tasks">32</span> API, <span data-claim="bench.ui_tasks">10</span> UI) is one Gherkin scenario. A generated test counts only if it passes on the real app and fails when a hand-written bug is seeded in.</p>
+        <p>A benchmark and CI gate for agents that write tests. Each of its <span data-claim="bench.tasks">42</span> tasks (<span data-claim="bench.api_tasks">32</span> API, <span data-claim="bench.ui_tasks">10</span> UI) is one Gherkin scenario. A generated test counts only if it passes on the real app and fails when a hand-written bug is seeded in. v3 adds <span data-claim="v3.tasks">15</span> held-out tasks frozen before any agent saw them, with bugs picked by mutation testing, and <code>aeg attack</code> red-teams agents with planted prompt injections.</p>
         <dl class="facts">
           <div><dt>Proves</dt><dd>Agent evaluation that holds up: frozen dev/held-out split, confidence intervals, record and replay</dd></div>
           <div><dt>Stack</dt><dd>Python, Playwright, OpenTelemetry, GitHub Actions composite action</dd></div>
-          <div><dt>Evidence</dt><dd>Every seeded bug is proven catchable by a reference test. The gate pairs runs task by task and fails a PR only on a drop that is both significant and at least 5 points. At 20 tasks × 3 trials it catches a 20-point drop <span data-claim="gate.power20">87%</span> of the time (interval overlap: <span data-claim="gate.overlap20">47%</span>), and the README says what it can't see.</dd></div>
+          <div><dt>Evidence</dt><dd>Every seeded bug is proven catchable by a reference test. The gate pairs runs task by task and fails a PR only on a drop that is both significant and at least 5 points. At 20 tasks × 3 trials it catches a 20-point drop <span data-claim="gate.power20">87%</span> of the time (interval overlap: <span data-claim="gate.overlap20">47%</span>), and the README says what it can't see. Its red team hijacked plain Claude Code in <span data-claim="inj.cc">8/36</span> trials and one prompt in <span data-claim="inj.sc">10/36</span>.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/agent-eval-gate">Repository</a></div>
       </div>
@@ -418,7 +447,7 @@ uv run aeg gate --baseline baselines/reference-dev.json --current results/latest
         <dl class="facts">
           <div><dt>Proves</dt><dd>LLM application development, tool orchestration, and failure handling</dd></div>
           <div><dt>Stack</dt><dd>LangGraph, Anthropic SDK (structured outputs, prompt caching), MCP client, Jira Cloud API</dd></div>
-          <div><dt>Evidence</dt><dd><span data-claim="sw.v2.rate">100%</span> of held-out trials (<span data-claim="sw.v2.frac">60/60</span>) vs <span data-claim="sc.v2.rate">53%</span> for a single call on the same model, at <span data-claim="sw.v2.cost">$0.0028</span> per trial. Opus 5.5 went <span data-claim="sw.opus.frac">20/20</span>, one trial per task.</dd></div>
+          <div><dt>Evidence</dt><dd>On <span data-claim="v3.tasks">15</span> blind held-out tasks: <span data-claim="v3.sw.success">98%</span> of trials succeed, catching <span data-claim="v3.sw.bugs">86%</span> of seeded bugs on Haiku 5.5 and <span data-claim="v3.opus.bugs">95%</span> on Opus 5.5. That's level with plain Claude Code (<span data-claim="v3.cc.bugs">89%</span>) at about a third of the cost, and far above one prompt (<span data-claim="v3.sc.bugs">7%</span>). Four defenses take planted prompt injections from <span data-claim="inj.sw.before">7/72</span> trials to <span data-claim="inj.sw.after">0/72</span>.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/storywright">Repository</a></div>
       </div>
@@ -446,7 +475,7 @@ uv run storywright publish --repo ../vendor-intake-app --jira KAN-1 --yes</pre><
         <dl class="facts">
           <div><dt>Proves</dt><dd>Claude Code skills and plugins, plus precision measured, not assumed</dd></div>
           <div><dt>Stack</dt><dd>Claude Code plugin, Python CLI, GitHub Action, Conventional Comments</dd></div>
-          <div><dt>Evidence</dt><dd>Opus 5.5 names the defect in <span data-claim="rl.opus.caught">29</span> of <span data-claim="rl.bugs">32</span> seeded bugs (scored by an LLM judge that agrees with blind hand labels at κ = <span data-claim="rl.judge_kappa">0.86</span>), with <span data-claim="rl.false_alarms">0</span> false alarms in <span data-claim="rl.clean_total">24</span> harmless changes, <span data-claim="rl.clean_hard">14</span> of them built to look risky. The same in each of 3 runs.</dd></div>
+          <div><dt>Evidence</dt><dd>Opus 5.5 names the defect in <span data-claim="rl.opus.caught">29</span> of <span data-claim="rl.bugs">32</span> seeded bugs (scored by an LLM judge that agrees with blind hand labels at κ = <span data-claim="rl.judge_kappa">0.86</span>), with <span data-claim="rl.false_alarms">0</span> false alarms in <span data-claim="rl.clean_total">24</span> harmless changes, <span data-claim="rl.clean_hard">14</span> of them built to look risky. The same in each of 3 runs. A false rationale in a PR body hid seeded bugs in <span data-claim="inj.rl.before">5/48</span> trials, and <span data-claim="inj.rl.after">0/48</span> once the reviewer treats the PR's own text as a claim.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/agent-dev-skills">Repository</a></div>
       </div>
@@ -471,7 +500,7 @@ uv run review-loop pr --repo owner/name --pr 42</pre></div>
         <dl class="facts">
           <div><dt>Proves</dt><dd>MCP server design with a real security model</dd></div>
           <div><dt>Stack</dt><dd>MCP Python SDK 2.x, httpx, GitHub REST API</dd></div>
-          <div><dt>Evidence</dt><dd><span data-claim="mcp.tools">Six</span> read-only tools. GET-only client, repo allowlist, and the token never leaves GitHub. Coverage is read from the pytest-cov summary line.</dd></div>
+          <div><dt>Evidence</dt><dd><span data-claim="mcp.tools">Six</span> read-only tools. GET-only client, repo allowlist, and the token never leaves GitHub. A red team planted instructions in CI logs: <span data-claim="inj.ci">0/270</span> trials hijacked Claude Code, with or without the opt-in log filter.</dd></div>
         </dl>
         <div class="links"><a href="https://github.com/dholman7/ci-context-mcp">Repository</a></div>
       </div>
@@ -495,7 +524,7 @@ claude mcp add ci-context \
         <dl class="facts">
           <div><dt>Proves</dt><dd>Observability for agents, and React data visualization without a chart library</dd></div>
           <div><dt>Stack</dt><dd>Next.js 16 static export, React 19, OpenTelemetry traces, GitHub Pages</dd></div>
-          <div><dt>Evidence</dt><dd><span data-claim="tel.runs">17</span> runs and their traces, rebuilt weekly from agent-eval-gate's published results.</dd></div>
+          <div><dt>Evidence</dt><dd><span data-claim="tel.runs">21</span> runs and their traces, plus pages for the extraction evals and the prompt-injection red teams, rebuilt weekly from the published results.</dd></div>
         </dl>
         <div class="links"><a href="https://dholman7.github.io/agent-telemetry/">Live site</a><a href="https://github.com/dholman7/agent-telemetry">Repository</a></div>
       </div>
@@ -554,8 +583,9 @@ npm run build   <span class="c"># static site in out/</span></pre></div>
   </div>
   <dl class="glossary">
     <div><dt>Seeded bug</dt><dd>A small, deliberate defect put into a copy of the app. A good test fails when it is present.</dd></div>
-    <div><dt>Held-out split</dt><dd>Tasks set aside from prompt tuning and used for scoring. A held-out score is only blind if no earlier result on those tasks shaped the agent; Storywright's current ones aren't.</dd></div>
+    <div><dt>Held-out split</dt><dd>Tasks set aside from prompt tuning and used for scoring. A held-out score is only blind if no earlier result on those tasks shaped the agent. The v1 and v2 held-out sets weren't, so v3's were written and frozen before any agent ran on them.</dd></div>
     <div><dt>Confidence interval</dt><dd>The range a success rate likely falls in. When two agents' ranges don't overlap, the difference isn't noise.</dd></div>
+    <div><dt>Prompt injection</dt><dd>Text planted where an agent reads it (a story, a log, a pull request) that tries to make it do something its user didn't ask for.</dd></div>
     <div><dt>Gherkin</dt><dd>Plain-language acceptance criteria written as Given / When / Then. Every task starts from one.</dd></div>
     <div><dt>MCP</dt><dd>Model Context Protocol, the standard way to give an AI assistant tools such as "read this CI log".</dd></div>
     <div><dt>dev and report profiles</dt><dd>Haiku 5.5 for cheap iteration, Opus 5.5 for any number that gets published or acted on.</dd></div>
