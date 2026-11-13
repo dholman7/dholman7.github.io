@@ -1,0 +1,7 @@
+# Weekly, grouped, so updates arrive as one reviewable PR per ecosystem and directory.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    groups: { actions: { patterns: ["*"] } }
