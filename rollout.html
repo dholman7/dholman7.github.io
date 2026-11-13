@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rolling This Out to a 40-Team Org</title>
+<meta name="description" content="How Dan Holman would roll the portfolio's test-writing agent, PR reviewer, eval gate, and contract tests out to 40 product teams: phases, false-positive budgets, ownership, cost at scale, and rollback playbooks.">
+<meta property="og:title" content="Rolling This Out to a 40-Team Org">
+<meta property="og:description" content="Phases, false-positive budgets, ownership, cost per PR at scale, and rollback playbooks, from measured numbers.">
+<meta property="og:url" content="https://dholman7.github.io/rollout.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://dholman7.github.io/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Same tokens as index.html; one reading column, with tables for budgets and costs. */
+:root {
+  --ground: #f4f5f8;
+  --surface: #ffffff;
+  --ink: #151b29;
+  --muted: #586276;
+  --rule: #dce0e8;
+  --agent: #2850d6;
+  --eval: #0b8574;
+  --code-bg: #eef0f5;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #11141b; --surface: #191e28; --ink: #e7eaf0; --muted: #9aa3b6; --rule: #2a3140;
+    --agent: #7e9cff; --eval: #3fc3ac; --code-bg: #0d1016; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #11141b; --surface: #191e28; --ink: #e7eaf0; --muted: #9aa3b6; --rule: #2a3140;
+  --agent: #7e9cff; --eval: #3fc3ac; --code-bg: #0d1016; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 1rem/1.6 var(--body);
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 46rem; margin-inline: auto; padding-block: 2.5rem 5rem; display: grid; gap: 3rem; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 4.5vw, 2.75rem); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 1.2rem; font-weight: 600; }
+p, ul { margin: 0; }
+ul { padding-left: 1.2rem; display: grid; gap: 0.4rem; }
+a { color: var(--agent); text-underline-offset: 0.18em; }
+a:focus-visible { outline: 2px solid var(--agent); outline-offset: 2px; border-radius: 3px; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+header { display: grid; gap: 1rem; }
+.back { font-family: var(--mono); font-size: 0.85rem; }
+.lede { color: var(--muted); font-size: 1.125rem; }
+section { display: grid; gap: 1rem; }
+.cases { display: grid; gap: 1.25rem; }
+.case { background: var(--surface); border: 1px solid var(--rule); border-left: 4px solid var(--eval); border-radius: 10px; padding: 1.2rem 1.4rem; display: grid; gap: 0.75rem; }
+.case dl { margin: 0; display: grid; gap: 0.55rem; }
+.case dl div { display: grid; grid-template-columns: 7.5rem 1fr; gap: 0.75rem; }
+.case dt { color: var(--muted); font-size: 0.88rem; padding-top: 0.1rem; }
+.case dd { margin: 0; }
+@media (max-width: 34rem) { .case dl div { grid-template-columns: 1fr; gap: 0.1rem; } }
+.case .links { font-size: 0.9rem; color: var(--muted); }
+footer { color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--rule); padding-top: 1.25rem; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 0.85rem; }
+tr:last-child td { border-bottom: none; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { color: var(--muted); font-size: 0.92rem; }
+ol { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.5rem; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <a class="back" href="./">← Portfolio</a>
+  <h1>Rolling this out to a 40-team org</h1>
+  <p class="lede">The portfolio proves each tool works on one app. This is the plan for 40 product teams: what turns on when, what each check has to earn before it can block a merge, who owns what, what it costs, and what happens when it goes wrong.</p>
+  <p class="note">Unit costs and measured rates on this page are recomputed from the repos by the same <a href="https://github.com/dholman7/dholman7.github.io/blob/main/claims/check.py">CI check</a> as the portfolio page. Org totals are those unit costs times the volumes stated next to them.</p>
+</header>
+
+<section aria-labelledby="what">
+  <h2 id="what">What rolls out</h2>
+  <ul>
+    <li><b>Contract tests and <code>can-i-deploy</code></b> between each team's services and their consumers, with a long-lived broker that records deployments to each environment.</li>
+    <li><b>review-loop</b> on pull requests, posting only comments that quote real code and survive a second check.</li>
+    <li><b>Storywright</b> on stories that have Gherkin acceptance criteria: a verified test, opened as a pull request for a person to review.</li>
+    <li><b>agent-eval-gate</b> on every change to the agents themselves (a prompt, a model, a tool), so a regression never reaches teams.</li>
+    <li><b>ci-context-mcp</b> for anyone using an AI assistant: read-only CI context, scoped to the repos a team allows.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="phases">
+  <h2 id="phases">Phases: advisory first, blocking only when earned</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Phase</th><th>Scope</th><th>What runs</th><th>Moves on when</th></tr></thead>
+    <tbody>
+      <tr><td>0. Pilot</td><td>2 volunteer teams, 4–6 weeks</td><td>review-loop in shadow mode: findings are logged, not posted, and the team labels each one. Storywright on request. Contract tests on one consumer and provider pair, with <code>can-i-deploy</code> reporting but not blocking.</td><td>The labels give a measured precision with an interval, and the teams would keep it on</td></tr>
+      <tr><td>1. Advisory</td><td>All 40 teams</td><td>Comments posted, never required. Storywright opens PRs for tagged stories. <code>can-i-deploy</code> runs on every deploy and reports. Each comment has a "wrong" button, which is the false-positive signal.</td><td>A check meets its false-positive budget below, per team</td></tr>
+      <tr><td>2. Blocking, check by check</td><td>Per team, per check</td><td>A check becomes required only where it has met its budget for 4 straight weeks. <code>can-i-deploy</code> blocks deploys first, because its failures are exact rather than probabilistic.</td><td>Most teams opted in, with no unreverted demotions in a quarter</td></tr>
+      <tr><td>3. Default on</td><td>New repos</td><td>On by default, with an owner-approved opt-out recorded in the repo</td><td>Not a phase to finish: budgets keep being measured</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section aria-labelledby="budgets">
+  <h2 id="budgets">False-positive budgets, and how many PRs it takes to prove one</h2>
+  <p>A check that blocks a merge wrongly costs more trust than it saves, so each blocking check gets a budget, and it stays advisory until the data shows it's within budget. The hard part is sample size. With zero false alarms in <i>n</i> tries, the 95% upper bound on the rate is about 3/<i>n</i>. Showing a rate under 1% therefore takes about 300 clean reviews in a row.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Check</th><th>Budget to block</th><th>Measured so far</th><th>What that proves</th></tr></thead>
+    <tbody>
+      <tr><td>review-loop blocking comment</td><td>under 1% of PRs</td><td><span data-claim="rl.false_alarms">0</span> of <span data-claim="rl.clean_total">24</span> harmless changes on Opus 5.5</td><td>Consistent with anything up to about 14%. The pilot has to supply the other ~280 reviews.</td></tr>
+      <tr><td>Storywright test failing on correct code</td><td>under 2% of PRs it opens</td><td><span data-claim="v3.sw.false_fail">0/44</span> blind trials on Haiku 5.5</td><td>Up to about 8%. Still advisory, because a person reviews every PR it opens anyway.</td></tr>
+      <tr><td><code>can-i-deploy</code></td><td>no false blocks</td><td>Exact: it blocks only on a failed or missing verification</td><td>Blocking from phase 2. A missing verification is fixed with a webhook, not a bypass.</td></tr>
+      <tr><td>agent-eval-gate on agent changes</td><td>p &lt; 0.05 and at least 5 points worse</td><td>Catches a 20-point drop <span data-claim="gate.power20">87%</span> of the time at 20 tasks × 3 trials</td><td>It won't see a 5-point drop at that size. Its README says so.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section aria-labelledby="owners">
+  <h2 id="owners">Who owns what</h2>
+  <ul>
+    <li><b>A small quality-platform team owns the tools:</b> the harness, the gate, the transports, the red teams, the broker, and the model and prompt versions. Agent changes ship through agent-eval-gate like any other code.</li>
+    <li><b>Product teams own their scenarios.</b> Their Gherkin is the specification Storywright writes against and the benchmark's tasks come from. Seeded bugs and references are reviewed with the team that owns the code.</li>
+    <li><b>Benchmarks are versioned and frozen.</b> A new version each quarter takes held-out tasks from teams' new scenarios, written before any agent sees them, by people who don't tune the agent. That's how v3 was made.</li>
+    <li><b>Each consumer team owns its contracts,</b> and each provider team owns verification and its provider states. The platform team owns the broker and the deploy gate.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="cost">
+  <h2 id="cost">Cost at org scale</h2>
+  <p>Assumed volume: 40 teams × 25 PRs a week is 1,000 PRs, and 40 × 8 stories with acceptance criteria is 320 stories.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Use</th><th>Unit cost, measured</th><th>Per week</th><th>Per year</th></tr></thead>
+    <tbody>
+      <tr><td>review-loop, Haiku 5.5, every PR</td><td class="num"><span data-claim="rl.review_cost.haiku">$0.0006</span> per review</td><td class="num">about $0.60</td><td class="num">about $30</td></tr>
+      <tr><td>review-loop, Opus 5.5, every PR</td><td class="num"><span data-claim="rl.review_cost.opus">$0.019</span> per review</td><td class="num">about $19</td><td class="num">about $1,000</td></tr>
+      <tr><td>Storywright, Haiku 5.5, every story</td><td class="num"><span data-claim="v3.sw.cost">$0.0030</span> per story</td><td class="num">about $1</td><td class="num">about $50</td></tr>
+      <tr><td>Storywright, Opus 5.5, every story</td><td class="num"><span data-claim="v3.opus.cost">$0.0932</span> per story</td><td class="num">about $30</td><td class="num">about $1,550</td></tr>
+      <tr><td>Eval gate on agent changes</td><td class="num">$0 (replayed)</td><td class="num">$0</td><td class="num">plus a live run per agent release, a few dollars</td></tr>
+    </tbody>
+  </table></div>
+  <p>Model spend is not the cost that matters. Even all-Opus is about $2,600 a year for 40 teams, less than a day of one engineer's time a quarter. The real costs are review time on the PRs Storywright opens and the trust lost to a wrong blocking comment. That's why the budgets above, not the bill, decide what blocks. Per-task caps ($1 a story) and a monthly org alert keep a runaway loop from becoming a surprise.</p>
+</section>
+
+<section aria-labelledby="ladder">
+  <h2 id="ladder">review-loop's trust ladder</h2>
+  <ol>
+    <li><b>Shadow.</b> Findings are logged, not posted, and the team labels them. It moves up when precision is measured with an interval narrow enough to decide on.</li>
+    <li><b>Advisory comments.</b> Posted, never required, with a "wrong" button. It moves up per category, not all at once.</li>
+    <li><b>Blocking for one category.</b> Starts with the highest-precision categories, such as tenant isolation and auth checks. It's required only on paths the team marks high-risk.</li>
+    <li><b>Required check on high-risk paths.</b> Demoted automatically to advisory if a week's dismissed-as-wrong rate exceeds the budget.</li>
+  </ol>
+  <p>Each step down is automatic, and each step up is a decision someone signs. The red team stays part of the ladder: the reviewer's defense against a PR description that argues a breaking change is fine is <a href="https://github.com/dholman7/agent-dev-skills/blob/main/docs/adr/0001-pr-text-is-a-claim.md">measured</a>, and every new attack found in the wild becomes a case.</p>
+</section>
+
+<section aria-labelledby="playbooks">
+  <h2 id="playbooks">When it goes wrong</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Signal</th><th>Immediate action</th><th>Then</th></tr></thead>
+    <tbody>
+      <tr><td>An agent change regresses (the gate fails)</td><td>The PR is blocked. Nothing reaches teams.</td><td>Read the failing trials in the dashboard before tuning anything. The gate tells you there's a drop, the traces tell you why.</td></tr>
+      <tr><td>A regression found after release (weekly live run)</td><td>Pin the previous prompt version and model. Both are config, so this is a revert, not a hotfix.</td><td>Add the failing case to dev, fix, and rerun held-out once.</td></tr>
+      <tr><td>A false-alarm spike on one team</td><td>Automatic demotion to advisory for that team</td><td>Label the week's dismissals, then fix the prompt or the check, and re-earn the budget</td></tr>
+      <tr><td>A prompt-injection incident</td><td>A kill switch per tool: turn off posting, publishing, or tools. Rotate any token the agent could reach.</td><td>The payload becomes a red-team case, and the defense is measured before and after, with its false-positive cost</td></tr>
+      <tr><td><code>can-i-deploy</code> blocks a deploy</td><td>The deploy stops. That's the point.</td><td>Fix the provider, revert the consumer, or mark the new interaction pending until the provider ships. Never delete the contract to get green.</td></tr>
+      <tr><td>The model API is down or rate-limited</td><td>Advisory checks skip, and blocking checks fall back to required human review</td><td>A limited run is recorded as an error, never as a pass. This red team learned that the hard way.</td></tr>
+      <tr><td>Spend spikes</td><td>Per-task caps stop the run, and the org alert pages the platform team</td><td>Check for a loop: tool budgets, repair limits, a prompt change that defeats the cache</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section aria-labelledby="measure">
+  <h2 id="measure">What to watch</h2>
+  <ul>
+    <li><b>Per check:</b> precision (1 − the dismissed-as-wrong rate) with its interval, and the coverage of blocking categories.</li>
+    <li><b>Per team:</b> time to merge before and after, the share of Storywright PRs merged with no edits, and escaped defects in areas with generated tests.</li>
+    <li><b>Per agent release:</b> the gate's result on blind held-out tasks, cost per trial, and the red team's attack rate.</li>
+    <li><b>Org-wide:</b> model spend against the alert, and how often <code>can-i-deploy</code> blocks, by cause.</li>
+  </ul>
+</section>
+
+<footer>Dan Holman · <a href="./">Portfolio</a> · <a href="built.html">How this was built</a> · <a href="https://github.com/dholman7">github.com/dholman7</a></footer>
+
+</main>
+</body>
+</html>

@@ -100,6 +100,15 @@ def v3_bug_p() -> str:
     return f"{float(row.group(1)):.2f}"
 
 
+def review_cost(model: str) -> float:
+    """Cost per review from review-loop's API-billed eval runs: total cost over reviews."""
+    paths = sorted((REPOS / "agent-dev-skills" / "evals" / "review" / "results").glob(f"{model}-[0-9].json"))
+    if not paths:
+        raise RuntimeError(f"no review-loop {model} eval runs")
+    results = [json.loads(p.read_text()) for p in paths]
+    return sum(r["cost_usd"] for r in results) / sum(len(r["rows"]) for r in results)
+
+
 def heldout_tasks(bench: str) -> str:
     return str(sum(t["split"] == "heldout" for t in bench_items(f"{bench}/tasks.yaml", "tasks")))
 
@@ -312,6 +321,10 @@ EXTRACTORS: dict[str, Callable[[], str]] = {
     "v3.sw.cost": lambda: f"${v3('storywright', 'cost_usd')['value']:.4f}",
     "v3.cc.cost": lambda: f"${v3('claude-code', 'cost_usd')['value']:.4f}",
     "v3.bug_p": v3_bug_p,
+    "v3.opus.cost": lambda: f"${v3('storywright-opus', 'cost_usd')['value']:.4f}",
+    "v3.sw.false_fail": lambda: "{successes}/{n}".format(**v3("storywright", "false_failure")),
+    "rl.review_cost.haiku": lambda: f"${review_cost('haiku'):.4f}",
+    "rl.review_cost.opus": lambda: f"${review_cost('opus'):.3f}",
     "inj.sw.before": lambda: frac(attack_runs(*UNDEFENDED)),
     "inj.sw.after": lambda: frac(attack_runs(*DEFENDED)),
     "inj.cc": lambda: frac(attack_runs("claude-code")),
@@ -372,7 +385,7 @@ def main() -> int:
     REPOS = args.repos.expanduser().resolve()
 
     site = Path(__file__).resolve().parent.parent
-    pages = [site / "index.html", site / "built.html", REPOS / "dholman7" / "README.md"]
+    pages = [site / "index.html", site / "built.html", site / "rollout.html", REPOS / "dholman7" / "README.md"]
     problems: list[str] = []
     used: set[str] = set()
     actual: dict[str, str] = {}
