@@ -23,7 +23,7 @@ jobs:
           for r in dholman7 vendor-intake-app agent-eval-gate storywright agent-dev-skills ci-context-mcp; do
             git clone --quiet --depth 1 "https://github.com/dholman7/$r" "repos/$r"
           done
-      - uses: astral-sh/setup-uv@v10.3.3
+      - uses: astral-sh/setup-uv@v10.4.0
       - uses: actions/setup-node@v7
         with:
           node-version-file: repos/vendor-intake-app/.nvmrc
